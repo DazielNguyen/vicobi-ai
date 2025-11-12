@@ -1,0 +1,7 @@
+uvicorn
+fastapi
+python-multipart
+pydantic[email]
+pydantic-settings
+pytest
+mongoengine
