@@ -9,9 +9,9 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
-      MONGO_INITDB_DATABASE: ${MONGO_DB_NAME}
+      MONGO_INITDB_DATABASE: ${MONGO_INITDB_DATABASE}
     healthcheck:
-      test: ["executable", "arg"]
+      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
       interval: 1m30s
       timeout: 30s
       retries: 5
