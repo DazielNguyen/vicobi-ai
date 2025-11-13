@@ -7,7 +7,7 @@ router = APIRouter(
     tags=["bill"],
 )
 
-@router.post("", response_model=BillResponse)
+@router.post("/process", response_model=BillResponse)
 async def process_bill(request: BillCreateRequest):
     return {"message": "Bill creation endpoint"}
 

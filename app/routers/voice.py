@@ -7,7 +7,7 @@ router = APIRouter(
     tags=["voice"],    
 )
 
-@router.post("", response_model=VoiceResponse)
+@router.post("/process", response_model=VoiceResponse)
 async def process_voice(request: VoiceCreateRequest):
     return {"message": "Voice processing endpoint"}
 
