@@ -16,7 +16,7 @@ app = FastAPI()
 # ========== PhoWhisper ASR helper (HuggingFace) - Vietnamese only ==========
 _ASR_PIPELINE = None
 
-def get_phowhisper_pipeline(model_name: str = "vinai/PhoWhisper-medium", device: int | str | None = None):
+def get_phowhisper_pipeline(model_name: str = "vinai/PhoWhisper-small", device: int | str | None = None):
     """Initialize and return PhoWhisper pipeline with optimizations"""
     global _ASR_PIPELINE
     if _ASR_PIPELINE is None:
@@ -38,7 +38,7 @@ def get_phowhisper_pipeline(model_name: str = "vinai/PhoWhisper-medium", device:
 
 def transcribe_with_phowhisper(
     path: str, 
-    model_name: str = "vinai/PhoWhisper-medium", 
+    model_name: str = "vinai/PhoWhisper-small", 
     device: int | str | None = None,
     chunk_length_s: int = 30,
     batch_size: int = 8
@@ -116,7 +116,7 @@ async def phowhisper_transcribe(
             results.append({
                 "filename": file.filename,
                 "transcript": text,
-                "model": "vinai/PhoWhisper-medium",
+                "model": "vinai/PhoWhisper-small",
                 "language": "vi",
                 "chunk_length_s": chunk_length_s,
                 "batch_size": batch_size,
@@ -128,7 +128,7 @@ async def phowhisper_transcribe(
             results.append({
                 "filename": file.filename,
                 "error": str(e),
-                "model": "vinai/PhoWhisper-medium",
+                "model": "vinai/PhoWhisper-small",
                 "processing_time_seconds": round(file_processing_time, 3)
             })
         finally:
