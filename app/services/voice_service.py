@@ -3,7 +3,11 @@ Service layer for voice/audio processing
 """
 from transformers import pipeline
 import torch
-from typing import Optional
+from typing import Optional, Dict, List, Any
+import re
+from datetime import datetime
+from app.utils import format_vnd_general
+from app.services.transaction_parser import TransactionParser
 
 
 # Global transcriber instance (lazy loading)
@@ -64,10 +68,40 @@ def transcribe_audio_file(wav_file_path: str, model_name: str = "vinai/PhoWhispe
         transcriber = get_transcriber(model_name=model_name)
         result = transcriber(wav_file_path)
         
+        # Result có thể là dict hoặc list
+        if isinstance(result, dict):
+            text = result.get("text", "")
+        elif isinstance(result, list) and len(result) > 0:
+            text = result[0].get("text", "") if isinstance(result[0], dict) else ""
+        else:
+            text = ""
+        
         return {
-            "text": result.get("text", ""),
+            "text": text,
             "model": model_name
         }
         
     except Exception as e:
         raise Exception(f"Lỗi khi transcribe audio: {str(e)}")
+
+
+def parse_transcription_to_voice_data(transcription_text: str) -> dict:
+    """
+    Parse transcription text thành structured voice data
+    SỬ DỤNG TransactionParser để tách nhiều giao dịch
+    """
+    # Generate unique voice_id
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    voice_id = f"voice_{timestamp}"
+    
+    # Parse bằng TransactionParser
+    parsed_data = TransactionParser.parse(transcription_text)
+    
+    return {
+        "voice_id": voice_id,
+        "total_amount": parsed_data["total_amount"],
+        "transactions": parsed_data["transactions"],
+        "money_type": "VND",
+        "utc_time": datetime.utcnow(),
+        "raw_transcription": transcription_text
+    }
