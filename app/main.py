@@ -8,10 +8,20 @@ import time
 
 import os
 
+# Import routers
+from app.routers import voice
+
 torch.cuda.is_available()
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
-app = FastAPI()
+app = FastAPI(
+    title="Vicobi AI API",
+    description="API for audio transcription and processing",
+    version="1.0.0"
+)
+
+# Include routers
+app.include_router(voice.router)
 
 # ========== PhoWhisper ASR helper (HuggingFace) - Vietnamese only ==========
 _ASR_PIPELINE = None
