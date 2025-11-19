@@ -3,10 +3,8 @@ Service layer for voice/audio processing
 """
 from transformers import pipeline
 import torch
-from typing import Optional, Dict, List, Any
-import re
+from typing import Optional
 from datetime import datetime
-from app.utils import format_vnd_general
 from app.services.transaction_parser import TransactionParser
 
 
@@ -14,7 +12,7 @@ from app.services.transaction_parser import TransactionParser
 _transcriber = None
 
 
-def get_transcriber(model_name: str = "vinai/PhoWhisper-base", device: Optional[str] = None):
+def get_transcriber(model_name: str = "vinai/PhoWhisper-small", device: Optional[str] = None):
     """
     Get or create transcriber pipeline
     
@@ -48,7 +46,7 @@ def get_transcriber(model_name: str = "vinai/PhoWhisper-base", device: Optional[
     return _transcriber
 
 
-def transcribe_audio_file(wav_file_path: str, model_name: str = "vinai/PhoWhisper-base") -> dict:
+def transcribe_audio_file(wav_file_path: str, model_name: str = "vinai/PhoWhisper-small") -> dict:
     """
     Transcribe audio file sang text
     

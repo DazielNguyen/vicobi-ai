@@ -5,7 +5,6 @@ from app.utils import convert_audio_to_wav
 from app.services.voice_service import transcribe_audio_file, parse_transcription_to_voice_data
 from app.models.voice import Voice, VoiceTransactionDetail, VoiceTransactions, VoiceTotalAmount
 from app.database import mongodb_available
-from datetime import datetime
 import os
 import tempfile
 from pathlib import Path
