@@ -2,9 +2,11 @@ from fastapi import APIRouter, UploadFile, File, HTTPException
 from app.config import settings
 from app.schemas.voice import VoiceResponse
 from app.utils import convert_audio_to_wav
-from app.services.voice_service import transcribe_audio_file, parse_transcription_to_voice_data
+from app.ai_models.voice import transcribe_audio_file
 from app.models.voice import Voice, VoiceTransactionDetail, VoiceTransactions, VoiceTotalAmount
-from app.database import mongodb_available
+from app.database import mongodb_available, is_mongodb_connected
+from app.services.gemini_extractor.gemini_service import get_gemini_service, GeminiService
+from typing import Optional
 import os
 import tempfile
 from pathlib import Path
@@ -14,30 +16,35 @@ router = APIRouter(
     tags=["voice"],    
 )
 
-@router.post("/process-audio", response_model=VoiceResponse)
-async def process_audio_to_voice(file: UploadFile = File(...)):
-    """
-    Upload file âm thanh → Transcribe → Parse thành structured data → Lưu MongoDB
+gemini_service: Optional[GeminiService] = None
+
+try:
+    gemini_service = get_gemini_service()
+except Exception:
+    pass
+
+@router.get("/health")
+async def health_check():
+    """Kiểm tra trạng thái hoạt động của service"""
+    return {
+        "status": "healthy",
+        "gemini_service": gemini_service is not None and gemini_service.is_ready(),
+        "mongodb": is_mongodb_connected()
+    }
+
+@router.post("/process", response_model=VoiceResponse)
+async def process_audio(file: UploadFile = File(...)):
+    """Xử lý file audio với transcription và trích xuất dữ liệu theo schema"""
+    if gemini_service is None or not gemini_service.is_ready():
+        raise HTTPException(
+            status_code=503,
+            detail="Gemini Service not initialized. Using fallback method."
+        )
     
-    Flow hoàn chỉnh:
-    1. Upload audio (mp3, aac, m4a, mp2, ogg, flac, wav...)
-    2. Convert sang .wav
-    3. Transcribe sang text
-    4. Parse text thành income/expense transactions
-    5. Lưu vào MongoDB
-    6. Trả về VoiceResponse JSON
-    
-    Args:
-        file: File âm thanh upload
-        
-    Returns:
-        VoiceResponse với structured data
-    """
     temp_input_path = None
     wav_path = None
     
     try:
-        # 1. Validate filename
         if not file.filename:
             raise HTTPException(status_code=400, detail="Tên file không hợp lệ")
         
@@ -49,7 +56,6 @@ async def process_audio_to_voice(file: UploadFile = File(...)):
                 detail=f"File format không được hỗ trợ. Các format được chấp nhận: {', '.join(allowed_extensions)}"
             )
         
-        # 2. Save uploaded file temporarily
         temp_dir = tempfile.gettempdir()
         temp_input_path = os.path.join(temp_dir, f"input_{file.filename}")
         
@@ -57,39 +63,53 @@ async def process_audio_to_voice(file: UploadFile = File(...)):
             content = await file.read()
             buffer.write(content)
         
-        # 3. Convert to .wav
         wav_path = convert_audio_to_wav(
             input_file=temp_input_path,
             sample_rate=16000,
             channels=1
         )
         
-        # 4. Transcribe audio to text
         transcription_result = transcribe_audio_file(wav_path)
         transcription_text = transcription_result.get("text", "")
         
         if not transcription_text:
             raise HTTPException(status_code=400, detail="Không thể transcribe được nội dung từ file âm thanh")
         
-        # 5. Parse transcription to structured voice data
-        voice_data = parse_transcription_to_voice_data(transcription_text)
+        # Sử dụng Gemini với schema validation
+        schema_result = gemini_service.extract_from_text_to_schema(transcription_text)
         
-        # 6. Save to MongoDB (if available)
+        # Tạo voice_id và utc_time
+        from datetime import datetime
+        voice_id = f"voice_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}"
+        utc_time = datetime.utcnow()
+        
+        # Lưu vào database nếu có sẵn
         saved_to_db = False
         if mongodb_available:
             try:
-                # Tạo embedded documents
+                # Chuyển đổi schema objects sang MongoDB documents
                 total_amount_doc = VoiceTotalAmount(
-                    incomes=voice_data["total_amount"]["incomes"],
-                    expenses=voice_data["total_amount"]["expenses"]
+                    incomes=schema_result["total_amount"].incomes,
+                    expenses=schema_result["total_amount"].expenses
                 )
                 
-                # Tạo transactions
                 income_transactions = [
-                    VoiceTransactionDetail(**t) for t in voice_data["transactions"]["incomes"]
+                    VoiceTransactionDetail(
+                        transaction_type=t.transaction_type,
+                        description=t.description,
+                        amount=t.amount,
+                        amount_string=t.amount_string,
+                        quantity=t.quantity
+                    ) for t in schema_result["transactions"].incomes
                 ]
                 expense_transactions = [
-                    VoiceTransactionDetail(**t) for t in voice_data["transactions"]["expenses"]
+                    VoiceTransactionDetail(
+                        transaction_type=t.transaction_type,
+                        description=t.description,
+                        amount=t.amount,
+                        amount_string=t.amount_string,
+                        quantity=t.quantity
+                    ) for t in schema_result["transactions"].expenses
                 ]
                 
                 transactions_doc = VoiceTransactions(
@@ -97,56 +117,40 @@ async def process_audio_to_voice(file: UploadFile = File(...)):
                     expenses=expense_transactions
                 )
                 
-                # Tạo Voice document
                 voice_doc = Voice(
-                    voice_id=voice_data["voice_id"],
+                    voice_id=voice_id,
                     total_amount=total_amount_doc,
                     transactions=transactions_doc,
-                    money_type=voice_data["money_type"],
-                    utc_time=voice_data["utc_time"],
-                    raw_transcription=voice_data["raw_transcription"]
+                    money_type=schema_result["money_type"],
+                    utc_time=utc_time,
+                    raw_transcription=transcription_text
                 )
                 
-                # Save to database
                 voice_doc.save()
                 saved_to_db = True
-                print(f"✓ Saved to MongoDB: {voice_data['voice_id']}")
-            except Exception as db_error:
-                print(f"⚠️  MongoDB save failed: {db_error}")
-                # Continue without saving - still return the data
+            except Exception:
+                pass
         
-        # 7. Cleanup temp files
-        try:
-            if temp_input_path and os.path.exists(temp_input_path):
-                os.remove(temp_input_path)
-            if wav_path and os.path.exists(wav_path):
-                os.remove(wav_path)
-        except Exception as cleanup_error:
-            print(f"Warning: Không thể xóa file tạm: {cleanup_error}")
-        
-        # 8. Return response (from parsed data, not from DB)
+        # Trả về response với dữ liệu đã được validate theo schema
         response_data = VoiceResponse(
-            voice_id=voice_data["voice_id"],
-            total_amount=voice_data["total_amount"],
-            transactions=voice_data["transactions"],
-            money_type=voice_data["money_type"],
-            utc_time=voice_data["utc_time"]
+            voice_id=voice_id,
+            total_amount=schema_result["total_amount"].model_dump(),
+            transactions=schema_result["transactions"].model_dump(),
+            money_type=schema_result["money_type"],
+            utc_time=utc_time
         )
-        
-        # Add metadata if MongoDB not available
-        if not saved_to_db:
-            print(f"⚠️  Data NOT saved to MongoDB (connection unavailable)")
         
         return response_data
         
     except HTTPException:
         raise
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=f"Schema validation failed: {str(e)}")
     except FileNotFoundError as e:
         raise HTTPException(status_code=404, detail=f"File không tồn tại: {str(e)}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Lỗi xử lý: {str(e)}")
     finally:
-        # Ensure cleanup
         try:
             if temp_input_path and os.path.exists(temp_input_path):
                 os.remove(temp_input_path)
@@ -155,6 +159,3 @@ async def process_audio_to_voice(file: UploadFile = File(...)):
         except:
             pass
 
-@router.get("/health-check")
-async def health_check():
-    return {"status": "healthy"}

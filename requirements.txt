@@ -1,18 +1,69 @@
-uvicorn
-fastapi
-python-multipart
-python-dotenv
-pydantic[email]
-pydantic-settings
-pytest
-mongoengine
-transformers
-pydub
-audioop-lts  # Required for pydub in Python 3.13+ (replaces deprecated audioop)
-torch   # pin cụ thể tùy platform: ví dụ pip install torch --index-url https://download.pytorch.org/whl/cu118
-sentencepiece
-accelerate
-google-generativeai
-tabulate
-pyyaml
-pillow
+# ===================================================================
+# FastAPI và Web Server
+# ===================================================================
+fastapi==0.115.5
+uvicorn[standard]==0.32.1
+python-multipart==0.0.20
+
+# ===================================================================
+# Environment & Configuration
+# ===================================================================
+python-dotenv==1.0.1
+pydantic[email]==2.10.3
+pydantic-settings==2.6.1
+
+# ===================================================================
+# Database
+# ===================================================================
+mongoengine==0.29.1
+
+# ===================================================================
+# AI/ML Libraries
+# ===================================================================
+transformers==4.46.3
+torch==2.5.1  # For CPU. For GPU: pip install torch --index-url https://download.pytorch.org/whl/cu118
+sentencepiece==0.2.0
+accelerate==1.1.1
+
+# ===================================================================
+# Google Generative AI
+# ===================================================================
+google-generativeai==0.8.3
+
+# ===================================================================
+# PaddlePaddle OCR
+# ===================================================================
+paddlenlp==2.6.1
+paddlepaddle==2.6.0
+paddleocr==2.7.3
+
+# ===================================================================
+# Image Processing
+# ===================================================================
+pillow==11.0.0
+opencv-python==4.6.0.66
+
+# ===================================================================
+# Audio Processing
+# ===================================================================
+pydub==0.25.1
+audioop-lts==0.2.1  # Required for pydub in Python 3.13+ (replaces deprecated audioop)
+
+# ===================================================================
+# Utilities
+# ===================================================================
+pyyaml==6.0.2
+loguru==0.7.3
+numpy==1.26.4
+scipy==1.14.1
+
+# ===================================================================
+# Fix protobuf version conflict (paddlenlp requires 3.20.2)
+# ===================================================================
+protobuf==3.20.2
+
+# ===================================================================
+# Testing (Development only)
+# ===================================================================
+pytest==8.3.4
+httpx==0.28.1  # For FastAPI testing

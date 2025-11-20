@@ -26,19 +26,15 @@ class VoiceResponse(BaseModel):
                 "transactions": {
                     "incomes": [
                         {
-                            "transaction_type": "income",
                             "description": "Lương tháng 11",
                             "amount": 3000000.0,
-                            "amount_string": "3 triệu",
                             "quantity": 1.0
                         }
                     ],
                     "expenses": [
                         {
-                            "transaction_type": "expense",
                             "description": "Tiền thuê nhà",
                             "amount": 2000000.0,
-                            "amount_string": "2 triệu",
                             "quantity": 1.0
                         }
                     ]

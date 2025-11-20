@@ -1,46 +1,59 @@
+"""
+Database Configuration
+
+MongoDB connection management with FastAPI lifespan.
+"""
 from contextlib import asynccontextmanager
 from mongoengine import connect, disconnect
-from app.config import settings
+from loguru import logger
 from fastapi import FastAPI
 
+from app.config import settings
 
-MONGO_INITDB_ROOT_USERNAME = settings.MONGO_INITDB_ROOT_USERNAME
-MONGO_INITDB_ROOT_PASSWORD = settings.MONGO_INITDB_ROOT_PASSWORD
-MONGO_INITDB_DATABASE = settings.MONGO_INITDB_DATABASE
-MONGO_DB_URL = f"mongodb://{MONGO_INITDB_ROOT_USERNAME}:{MONGO_INITDB_ROOT_PASSWORD}@localhost:27017/{MONGO_INITDB_DATABASE}?authSource=admin"
 
 # Global flag to track MongoDB connection status
 mongodb_available = False
 
+
+def is_mongodb_connected() -> bool:
+    """Trả về trạng thái kết nối MongoDB hiện tại"""
+    return mongodb_available
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Lifecycle cho FastAPI — kết nối MongoDB khi khởi động và ngắt khi tắt"""
+    """
+    Lifecycle manager for FastAPI application.
+    Connects to MongoDB on startup and disconnects on shutdown.
+    """
     global mongodb_available
     
     try:
-        print("Connecting to MongoDB...")
+        logger.info("🔌 Connecting to MongoDB...")
         connect(
-            db=MONGO_INITDB_DATABASE, 
-            host=MONGO_DB_URL, 
+            db=settings.MONGO_INITDB_DATABASE, 
+            host=settings.mongo_uri, 
             alias="default",
-            serverSelectionTimeoutMS=5000,  # Timeout nhanh để không chờ lâu
+            serverSelectionTimeoutMS=5000,  # Quick timeout
             connectTimeoutMS=5000
         )
         mongodb_available = True
-        print("✓ MongoDB connected successfully!")
+        logger.success(f"✅ MongoDB connected: {settings.MONGO_HOST}:{settings.MONGO_PORT}/{settings.MONGO_INITDB_DATABASE}")
     except Exception as e:
         mongodb_available = False
-        print(f"⚠️  MongoDB connection failed: {e}")
-        print("⚠️  API will run WITHOUT MongoDB (transcription-only mode)")
-        print("💡 To enable MongoDB:")
-        print("   - Option 1: Start Docker Desktop + docker compose up -d")
-        print("   - Option 2: Install MongoDB locally + brew services start mongodb-community")
+        logger.warning(f"⚠️  MongoDB connection failed: {e}")
+        logger.warning("⚠️  API will run WITHOUT MongoDB (transcription-only mode)")
+        logger.info("💡 To enable MongoDB:")
+        logger.info("   - Option 1: Start Docker Desktop + docker compose up -d")
+        logger.info("   - Option 2: Install MongoDB locally + brew services start mongodb-community")
 
     yield
 
+    # Cleanup on shutdown
     if mongodb_available:
-        print("Disconnecting MongoDB...")
+        logger.info("🔌 Disconnecting MongoDB...")
         try:
             disconnect(alias="default")
-        except:
-            pass
+            logger.success("✅ MongoDB disconnected")
+        except Exception as e:
+            logger.error(f"❌ Failed to disconnect MongoDB: {e}")

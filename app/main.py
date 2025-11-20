@@ -1,136 +1,56 @@
 import shutil
 from pathlib import Path
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
+from fastapi.middleware.cors import CORSMiddleware
 from loguru import logger
-from dotenv import load_dotenv
 
-# Load environment variables from .env file
-load_dotenv()
-
-# Import extractor components
-from app.src.gemini_extractor.pipeline import GeminiInvoiceExtractor, BatchProcessor
-from app.src.gemini_extractor.config import load_config
-
-# Import routers
+from app.config import settings
+from app.database import lifespan as db_lifespan
 from app.routers import voice, bill
-from app.database import lifespan
+from app.services.gemini_extractor.gemini_service import get_gemini_service, GeminiService
+from app.services.gemini_extractor.config import load_config
 
-# ============================================================================
-# INITIALIZATION
-# ============================================================================
-
-# Initialize global variables
-config = None
-extractor = None
-batch_processor = None
-
-# Directory structure
-UPLOAD_DIR = Path("uploads")
-OUTPUT_DIR = Path("output")
-TEMP_DIR = Path("temp")
-
-# Load config
 try:
     config = load_config()
-    logger.info("✅ Configuration loaded successfully")
+    gemini_service = get_gemini_service(config)
+    bill.gemini_service = gemini_service
 except Exception as e:
-    logger.error(f"❌ Failed to load configuration: {e}")
-    logger.warning("⚠️ Extractor will be initialized without config")
-
-# ============================================================================
-# FASTAPI APP
-# ============================================================================
+    bill.gemini_service = None
 
 app = FastAPI(
-    title="Vicobi AI API",
-    description="API for voice and bill processing",
-    version="1.0.0",
-    lifespan=lifespan
+    title=settings.PROJECT_NAME,
+    description="API for voice transcription and bill/invoice processing using AI",
+    version=settings.VERSION,
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_url=f"{settings.API_PREFIX}/openapi.json",
+    lifespan=db_lifespan,
+    debug=settings.DEBUG,
 )
 
-# Include routers
-app.include_router(voice.router)
-app.include_router(bill.router)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.allowed_origins_list,
+    allow_credentials=True,
+    allow_methods=settings.allowed_methods_list,
+    allow_headers=settings.allowed_headers_list,
+)
 
-# Share global variables with bill router
-bill.config = config
-bill.extractor = None  # Will be set in startup
-bill.batch_processor = None  # Will be set in startup
-bill.UPLOAD_DIR = UPLOAD_DIR
-bill.OUTPUT_DIR = OUTPUT_DIR
-bill.TEMP_DIR = TEMP_DIR
+app.include_router(voice.router, prefix=settings.API_PREFIX)
+app.include_router(bill.router, prefix=settings.API_PREFIX)
 
-
-# ============================================================================
-# LIFECYCLE EVENTS
-# ============================================================================
-
-@app.on_event("startup")
-async def startup_event():
-    """Initialize extractor on startup"""
-    global extractor, batch_processor
-    
-    logger.info("🚀 Starting Vicobi AI API...")
-    
-    # Create directories
-    UPLOAD_DIR.mkdir(exist_ok=True, parents=True)
-    OUTPUT_DIR.mkdir(exist_ok=True, parents=True)
-    TEMP_DIR.mkdir(exist_ok=True, parents=True)
-    
-    try:
-        logger.info(f"Config is None: {config is None}")
-        if config is None:
-            raise ValueError("Configuration not loaded")
-        
-        # Validate API key is set
-        logger.info("Validating configuration...")
-        validation_result = config.validate()
-        logger.info(f"Validation result: {validation_result}")
-        
-        if not validation_result:
-            raise ValueError("Configuration validation failed")
-        
-        # Initialize extractor
-        logger.info("Creating GeminiInvoiceExtractor...")
-        extractor = GeminiInvoiceExtractor(config)
-        logger.info("Creating BatchProcessor...")
-        batch_processor = BatchProcessor(extractor)
-        
-        # Share with bill router
-        bill.extractor = extractor
-        bill.batch_processor = batch_processor
-        
-        logger.info("✅ Extractor initialized successfully")
-        logger.info(f"📋 Model: {config.get('api.model_version')}")
-        
-    except Exception as e:
-        logger.error(f"❌ Failed to initialize extractor: {e}")
-        logger.error(f"Exception type: {type(e).__name__}")
-        import traceback
-        logger.error(f"Traceback:\n{traceback.format_exc()}")
-        logger.warning("⚠️ API will start but extraction endpoints will not work")
-
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Cleanup on shutdown"""
-    logger.info("🛑 Shutting down API...")
-    
-    # Clean up temporary files
-    try:
-        shutil.rmtree(TEMP_DIR, ignore_errors=True)
-        TEMP_DIR.mkdir(exist_ok=True)
-        logger.info("🧹 Cleaned up temporary files")
-    except Exception as e:
-        logger.error(f"Failed to clean up temp files: {e}")
-
-
-# ============================================================================
-# ROOT ENDPOINT
-# ============================================================================
-
-@app.get("/")
+@app.get("/", include_in_schema=False)
 async def root():
-    """Root endpoint - redirect to docs"""
     return RedirectResponse(url="/docs")
+
+@app.get("/health", tags=["Health"])
+async def health_check():
+    return {
+        "status": "healthy",
+        "service": settings.PROJECT_NAME,
+        "version": settings.VERSION,
+        "environment": settings.ENVIRONMENT,
+    }

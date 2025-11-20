@@ -5,7 +5,6 @@ from pydantic import BaseModel, Field, ConfigDict
 from datetime import datetime
 from typing import Any, Dict, List, Literal, Optional
 from .base import BillTransactionDetailSchema, BillTotalAmountSchema, BillTransactionsSchema
-from app.models.bill import InvoiceData
 
 
 # ============================================================================
@@ -16,7 +15,7 @@ class ExtractionResponse(BaseModel):
     """Response model for single extraction"""
     success: bool
     message: str
-    data: Optional[InvoiceData] = None
+    data: Optional[Dict[str, Any]] = None  # Changed from InvoiceData to flexible dict
     job_id: Optional[str] = None
     processing_time: Optional[float] = None
     metadata: Optional[Dict[str, Any]] = None

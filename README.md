@@ -1,52 +1,223 @@
-# vicobi-ai
+# 🚀 Vicobi AI
 
-## Getting started
+**Vicobi AI** là một API dịch vụ xử lý giọng nói và hóa đơn sử dụng AI, được xây dựng với FastAPI, MongoDB và Google Gemini AI.
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+## ✨ Tính năng
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+- 🎤 **Voice Processing**: Xử lý và phân tích giọng nói
+- 📄 **Bill/Invoice Extraction**: Trích xuất thông tin từ hóa đơn bằng AI (Gemini, PaddleOCR)
+- 🗄️ **MongoDB Integration**: Lưu trữ dữ liệu với MongoDB
+- 🔒 **Secure Configuration**: Quản lý biến môi trường với `.env`
+- 📚 **Auto Documentation**: API docs tự động với Swagger UI
 
-## Add your files
+## 🛠️ Công nghệ
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
+- **FastAPI**: Web framework hiện đại, hiệu suất cao
+- **MongoDB**: NoSQL database
+- **Google Gemini AI**: AI model cho trích xuất thông tin
+- **PaddleOCR**: OCR engine cho tiếng Việt
+- **Pydantic**: Data validation
+- **Loguru**: Logging system
+
+## 📋 Yêu cầu
+
+- Python 3.10+
+- MongoDB (Docker hoặc local)
+- Google Gemini API Key
+
+## 🚀 Cài đặt
+
+### 1. Clone repository
+
+```bash
+git clone https://gitlab.com/vicobi/vicobi-ai.git
+cd vicobi-ai
+```
+
+### 2. Tạo môi trường ảo
+
+```bash
+python -m venv venv
+source venv/bin/activate  # macOS/Linux
+# hoặc
+venv\\Scripts\\activate  # Windows
+```
+
+### 3. Cài đặt dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### 4. Cấu hình môi trường
+
+Sao chép file `.env-example` thành `.env` và cập nhật các giá trị:
+
+```bash
+cp .env-example .env
+```
+
+Chỉnh sửa file `.env`:
+
+```env
+# MongoDB
+MONGO_INITDB_ROOT_USERNAME=mongo
+MONGO_INITDB_ROOT_PASSWORD=your_secure_password
+MONGO_INITDB_DATABASE=VicobiMongoDB
+
+# Gemini API
+GEMINI_API_KEY=your_gemini_api_key_here
+```
+
+### 5. Khởi động MongoDB (Docker)
+
+```bash
+docker compose up -d
+```
+
+Hoặc cài đặt MongoDB local:
+
+```bash
+# macOS
+brew install mongodb-community
+brew services start mongodb-community
+```
+
+### 6. Chạy ứng dụng
+
+```bash
+uvicorn app.main:app --reload
+```
+
+API sẽ chạy tại: `http://localhost:8000`
+
+API Documentation: `http://localhost:8000/docs`
+
+## 📁 Cấu trúc Project
 
 ```
-cd existing_repo
-git remote add origin https://gitlab.com/vicobi/vicobi-ai.git
-git branch -M main
-git push -uf origin main
+vicobi-ai/
+├── app/
+│   ├── __init__.py
+│   ├── main.py                 # FastAPI app entry point
+│   ├── config.py               # Configuration management
+│   ├── database.py             # MongoDB connection
+│   ├── utils.py                # Utility functions
+│   ├── routers/                # API endpoints
+│   │   ├── voice.py
+│   │   └── bill.py
+│   ├── models/                 # Database models
+│   ├── schemas/                # Pydantic schemas
+│   ├── services/               # Business logic
+│   │   ├── voice_service.py
+│   │   └── gemini_extractor/
+│   └── src/                    # OCR & AI models
+├── uploads/                    # Upload directory
+├── logs/                       # Log files
+├── .env                        # Environment variables (not in git)
+├── .env-example                # Example environment file
+├── requirements.txt            # Python dependencies
+└── docker-compose.yml          # Docker configuration
 ```
 
-## Integrate with your tools
+## 🔧 Configuration
 
-- [ ] [Set up project integrations](https://gitlab.com/vicobi/vicobi-ai/-/settings/integrations)
+Tất cả cấu hình được quản lý thông qua file `.env`. Xem `.env-example` để biết danh sách đầy đủ các biến môi trường.
 
-## Collaborate with your team
+### Các biến môi trường chính:
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
+| Biến             | Mô tả                               | Mặc định    |
+| ---------------- | ----------------------------------- | ----------- |
+| `PROJECT_NAME`   | Tên project                         | VicobiAI    |
+| `API_PREFIX`     | API route prefix                    | /api/v1     |
+| `ENVIRONMENT`    | Môi trường (development/production) | development |
+| `MONGO_HOST`     | MongoDB host                        | localhost   |
+| `MONGO_PORT`     | MongoDB port                        | 27017       |
+| `GEMINI_API_KEY` | Google Gemini API key               | (required)  |
+| `LOG_LEVEL`      | Logging level                       | INFO        |
 
-## Test and Deploy
+## 📝 API Endpoints
 
-Use the built-in continuous integration in GitLab.
+### Health Check
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+```bash
+GET /health
+```
+
+### Voice Processing
+
+```bash
+POST /api/v1/voice/transcribe
+```
+
+### Bill Processing
+
+```bash
+POST /api/v1/bill/extract
+```
+
+Chi tiết đầy đủ tại: `http://localhost:8000/docs`
+
+## 🧪 Testing
+
+```bash
+pytest
+```
+
+## 📊 Logging
+
+Logs được lưu tại `logs/api.log` với rotation tự động:
+
+- Rotation size: 500 MB
+- Retention: 10 days
+
+## 🐳 Docker
+
+### Build và chạy với Docker Compose
+
+```bash
+docker compose up -d
+```
+
+### Dừng services
+
+```bash
+docker compose down
+```
+
+## 🔒 Security
+
+- ⚠️ **KHÔNG** commit file `.env` vào git
+- 🔑 Sử dụng API keys mạnh và bảo mật
+- 🛡️ Enable CORS chỉ cho các origins tin cậy
+- 📝 Review logs thường xuyên
+
+## 📚 Documentation
+
+- [FastAPI Documentation](https://fastapi.tiangolo.com/)
+- [MongoDB Documentation](https://www.mongodb.com/docs/)
+- [Google Gemini API](https://ai.google.dev/)
+- [PaddleOCR](https://github.com/PaddlePaddle/PaddleOCR)
+
+## 🤝 Contributing
+
+1. Fork repository
+2. Tạo feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to branch (`git push origin feature/AmazingFeature`)
+5. Tạo Pull Request
+
+## 📄 License
+
+[MIT License](LICENSE)
+
+## 👥 Team
+
+Vicobi Development Team
 
 ---
 
-# Editing this README
-
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
-
-## Suggestions for a good README
+Made with ❤️ by Vicobi Team
 
 Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
 
