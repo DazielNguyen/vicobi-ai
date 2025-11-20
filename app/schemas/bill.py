@@ -3,8 +3,66 @@ Bill schemas for API requests and responses
 """
 from pydantic import BaseModel, Field, ConfigDict
 from datetime import datetime
-from typing import Literal, Optional
+from typing import Any, Dict, List, Literal, Optional
 from .base import BillTransactionDetailSchema, BillTotalAmountSchema, BillTransactionsSchema
+from app.models.bill import InvoiceData
+
+
+# ============================================================================
+# EXTRACTION SCHEMAS (for Gemini Invoice Extraction)
+# ============================================================================
+
+class ExtractionResponse(BaseModel):
+    """Response model for single extraction"""
+    success: bool
+    message: str
+    data: Optional[InvoiceData] = None
+    job_id: Optional[str] = None
+    processing_time: Optional[float] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
+class BatchExtractionResponse(BaseModel):
+    """Response for batch extraction"""
+    success: bool
+    message: str
+    job_id: str
+    total_files: int
+    status_url: str
+
+
+class HealthResponse(BaseModel):
+    """Health check response"""
+    status: str
+    version: str
+    extractor_initialized: bool
+    config_loaded: bool
+    model_version: Optional[str] = None
+
+
+class JobStatusResponse(BaseModel):
+    """Job status response"""
+    job_id: str
+    status: str  # processing, completed, failed
+    total_files: int
+    processed: int
+    success: int
+    failed: int
+    results: List[Dict[str, Any]]
+    errors: List[Dict[str, Any]]
+    created_at: str
+    updated_at: str
+
+
+class JobListResponse(BaseModel):
+    """Job list response"""
+    total: int
+    jobs: List[JobStatusResponse]
+
+
+# ============================================================================
+# BILL SCHEMAS (for Bill Management - if needed)
+# ============================================================================
 
 
 class BillCreateRequest(BaseModel):

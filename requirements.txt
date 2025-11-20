@@ -1,6 +1,7 @@
 uvicorn
 fastapi
 python-multipart
+python-dotenv
 pydantic[email]
 pydantic-settings
 pytest
@@ -11,3 +12,7 @@ audioop-lts  # Required for pydub in Python 3.13+ (replaces deprecated audioop)
 torch   # pin cụ thể tùy platform: ví dụ pip install torch --index-url https://download.pytorch.org/whl/cu118
 sentencepiece
 accelerate
+google-generativeai
+tabulate
+pyyaml
+pillow
