@@ -7,19 +7,15 @@ from typing import Literal
 
 class VoiceTransactionDetailSchema(BaseModel):
     """Schema cho chi tiết giao dịch Voice"""
-    transaction_type: Literal["income", "expense"]
-    description: str = Field(..., min_length=1, max_length=500)
     amount: float = Field(..., ge=0)
-    amount_string: str
+    description: str = Field(..., min_length=1, max_length=500)
     quantity: float = Field(default=1.0, ge=0)
 
     class Config:
         json_schema_extra = {
             "example": {
-                "transaction_type": "income",
-                "description": "Lương tháng 11",
                 "amount": 3000000.0,
-                "amount_string": "3 triệu",
+                "description": "Lương tháng 11",
                 "quantity": 1.0
             }
         }
@@ -95,15 +91,15 @@ class VoiceTransactionsSchema(BaseModel):
             "example": {
                 "incomes": [
                     {
-                        "description": "Lương tháng 11",
                         "amount": 3000000.0,
+                        "description": "Lương tháng 11",
                         "quantity": 1.0
                     }
                 ],
                 "expenses": [
                     {
-                        "description": "Tiền thuê nhà",
                         "amount": 2000000.0,
+                        "description": "Tiền thuê nhà",
                         "quantity": 1.0
                     }
                 ]

@@ -7,10 +7,8 @@ from datetime import datetime
 
 class VoiceTransactionDetail(EmbeddedDocument):
     """Embedded document cho chi tiết giao dịch"""
-    transaction_type = fields.StringField(required=True, choices=["income", "expense"])
-    description = fields.StringField(required=True, max_length=500)
     amount = fields.FloatField(required=True, min_value=0)
-    amount_string = fields.StringField(required=True)
+    description = fields.StringField(required=True, max_length=500)
     quantity = fields.FloatField(default=1.0, min_value=0)
 
 
@@ -65,31 +63,27 @@ class Voice(Document):
         return {
             "voice_id": self.voice_id,
             "total_amount": {
-                "incomes": self.total_amount.incomes,
-                "expenses": self.total_amount.expenses
+                "incomes": self.total_amount.incomes,  # type: ignore
+                "expenses": self.total_amount.expenses  # type: ignore
             },
             "transactions": {
                 "incomes": [
                     {
-                        "transaction_type": t.transaction_type,
-                        "description": t.description,
                         "amount": t.amount,
-                        "amount_string": t.amount_string,
+                        "description": t.description,
                         "quantity": t.quantity
                     }
-                    for t in self.transactions.incomes
+                    for t in self.transactions.incomes  # type: ignore
                 ],
                 "expenses": [
                     {
-                        "transaction_type": t.transaction_type,
-                        "description": t.description,
                         "amount": t.amount,
-                        "amount_string": t.amount_string,
+                        "description": t.description,
                         "quantity": t.quantity
                     }
-                    for t in self.transactions.expenses
+                    for t in self.transactions.expenses  # type: ignore
                 ]
             },
             "money_type": self.money_type,
-            "utc_time": self.utc_time.isoformat() if self.utc_time else None
+            "utc_time": self.utc_time.isoformat() if self.utc_time else None  # type: ignore
         }

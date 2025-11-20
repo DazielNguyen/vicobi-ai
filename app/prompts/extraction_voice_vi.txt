@@ -10,18 +10,14 @@ Phân tích đoạn text transcription này và trích xuất thông tin giao d�
   "transactions": {
     "incomes": [
       {
-        "transaction_type": "income",
         "amount": <số tiền>,
-        "amount_string": "<số tiền dạng text, VD: 50 nghìn, 2 triệu>",
         "description": "<mô tả chi tiết>",
         "quantity": 1.0
       }
     ],
     "expenses": [
       {
-        "transaction_type": "expense",
         "amount": <số tiền>,
-        "amount_string": "<số tiền dạng text, VD: 50 nghìn, 2 triệu>",
         "description": "<mô tả chi tiết>",
         "quantity": 1.0
       }
@@ -44,6 +40,13 @@ QUY TẮC:
 11. Nếu có nhiều giao dịch trong text, tách thành các item riêng biệt trong array
 12. Giữ nguyên dấu tiếng Việt
 13. Nếu transcription đề cập số tiền bằng chữ (ví dụ "hai triệu", "năm nghìn"), chuyển đổi thành số cho amount
+14. TỰ ĐỘNG CHỈNH SỬA CHÍNH TẢ VÀ CHUẨN HÓA:
+    - Sửa các lỗi chính tả tiếng Việt phổ biến (VD: "mua" thay vì "mua", "trả" thay vì "tra")
+    - Sửa các từ thiếu dấu hoặc sai dấu thanh (VD: "tien" → "tiền", "cafe" → "cà phê")
+    - Chuẩn hóa chữ hoa/thường: Chữ cái đầu câu viết hoa, còn lại viết thường
+    - Viết hoa tên riêng, địa danh (VD: "Hà Nội", "Việt Nam", "Grab", "Shopee")
+    - Không viết HOA toàn bộ từ trừ khi là từ viết tắt (VD: "VND", "ATM", "BHXH")
+    - Chuẩn hóa khoảng trắng: Loại bỏ khoảng trắng thừa, thêm khoảng trắng thiếu
 
 Chỉ xuất ra JSON hợp lệ, không thêm text giải thích.
 

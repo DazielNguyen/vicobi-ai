@@ -64,8 +64,13 @@ class GeminiVoiceExtractor:
         response = self.model.generate_content(full_prompt)
         response_text = response.text.strip()
         
+        # Extract token usage
+        tokens_used = 0
+        if hasattr(response, 'usage_metadata'):
+            tokens_used = getattr(response.usage_metadata, 'total_token_count', 0)
+        
         if return_raw:
-            return {"raw_response": response_text}
+            return {"raw_response": response_text, "tokens_used": tokens_used}
         
         import json
         import re
@@ -85,6 +90,9 @@ class GeminiVoiceExtractor:
                 result["transactions"] = {"incomes": [], "expenses": []}
             if "money_type" not in result:
                 result["money_type"] = "VND"
+            
+            # Add token usage to result
+            result["tokens_used"] = tokens_used
                 
             return result
         except json.JSONDecodeError as e:
@@ -93,6 +101,7 @@ class GeminiVoiceExtractor:
                 "total_amount": {"incomes": 0.0, "expenses": 0.0},
                 "transactions": {"incomes": [], "expenses": []},
                 "money_type": "VND",
+                "tokens_used": tokens_used,
                 "error": f"JSON decode error: {str(e)}",
                 "raw_response": response_text
             }
@@ -108,8 +117,11 @@ class GeminiVoiceExtractor:
             text: Voice transcript text to process
             
         Returns:
-            Dictionary containing validated schema objects
+            Dictionary containing validated schema objects with metadata
         """
+        import time
+        start_time = time.time()
+        
         # First extract JSON from Gemini
         json_result = self.extract_from_text(text, return_raw=False)
         
@@ -142,11 +154,16 @@ class GeminiVoiceExtractor:
                 expenses=expenses
             )
             
-            # Return structured result
+            # Calculate processing time
+            processing_time = time.time() - start_time
+            
+            # Return structured result with metadata
             return {
                 'total_amount': total_amount,
                 'transactions': transactions,
-                'money_type': json_result.get('money_type', 'VND')
+                'money_type': json_result.get('money_type', 'VND'),
+                'processing_time': round(processing_time, 2),
+                'tokens_used': json_result.get('tokens_used', 0)
             }
             
         except Exception as e:
