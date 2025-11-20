@@ -154,3 +154,7 @@ async def process_audio_to_voice(file: UploadFile = File(...)):
                 os.remove(wav_path)
         except:
             pass
+
+@router.get("/health-check")
+async def health_check():
+    return {"status": "healthy"}

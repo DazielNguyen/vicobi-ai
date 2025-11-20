@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
 
 # Import routers
-from app.routers import voice
+from app.routers import voice, bill
 from app.database import lifespan
 
 app = FastAPI(
@@ -14,4 +14,4 @@ app = FastAPI(
 
 # Include routers
 app.include_router(voice.router)
-
+app.include_router(bill.router)

@@ -9,7 +9,8 @@ router = APIRouter(
 
 @router.post("/process", response_model=BillResponse)
 async def process_bill(request: BillCreateRequest):
-    return {"message": "Bill creation endpoint"}
+    # TODO: Implement bill processing logic
+    pass
 
 @router.get("/health-check")
 async def health_check():
