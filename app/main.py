@@ -1,17 +1,13 @@
-import shutil
-from pathlib import Path
-from contextlib import asynccontextmanager
-
 from fastapi import FastAPI
+from fastapi.params import Depends
 from fastapi.responses import RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
-from loguru import logger
-
 from app.config import settings
 from app.database import lifespan as db_lifespan
 from app.routers import voice, bill
-from app.services.gemini_extractor.gemini_service import get_gemini_service, GeminiService
+from app.services.gemini_extractor.gemini_service import get_gemini_service
 from app.services.gemini_extractor.config import load_config
+from app.auth import verify_jwt
 
 try:
     config = load_config()
@@ -47,7 +43,7 @@ async def root():
     return RedirectResponse(url="/docs")
 
 @app.get("/health", tags=["Health"])
-async def health_check():
+async def health_check(user=Depends(verify_jwt)):
     return {
         "status": "healthy",
         "service": settings.PROJECT_NAME,

@@ -77,6 +77,7 @@ class VoiceService:
     def save_to_database(
         self,
         voice_id: str,
+        cog_sub: str,
         schema_result: Dict[str, Any],
         transcription_text: str,
         utc_time: datetime
@@ -117,11 +118,14 @@ class VoiceService:
             
             voice_doc = Voice(
                 voice_id=voice_id,
+                cog_sub=cog_sub,
                 total_amount=total_amount_doc,
                 transactions=transactions_doc,
                 money_type=schema_result["money_type"],
                 utc_time=utc_time,
-                raw_transcription=transcription_text
+                raw_transcription=transcription_text,
+                processing_time=schema_result.get("processing_time"),
+                tokens_used=schema_result.get("tokens_used")
             )
             
             voice_doc.save()
@@ -149,7 +153,7 @@ class VoiceService:
             tokens_used=schema_result.get("tokens_used")
         )
     
-    async def process_audio_file(self, file: UploadFile) -> VoiceResponse:
+    async def process_audio_file(self, file: UploadFile, cog_sub: str) -> VoiceResponse:
         """
         Process audio file: validate, transcribe, extract, save to DB, and return response
         Main entry point for voice processing workflow
@@ -175,7 +179,7 @@ class VoiceService:
             utc_time = datetime.utcnow()
             
             # Save to database (best effort)
-            self.save_to_database(voice_id, schema_result, transcription_text, utc_time)
+            self.save_to_database(voice_id, cog_sub, schema_result, transcription_text, utc_time)
             
             # Create and return response
             return self.create_response(voice_id, schema_result, utc_time)

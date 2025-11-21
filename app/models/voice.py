@@ -30,6 +30,7 @@ class Voice(Document):
     Lưu trữ dữ liệu đã xử lý từ transcription
     """
     voice_id = fields.StringField(required=True, unique=True, max_length=100)
+    cog_sub = fields.StringField(required=True, max_length=100)
     total_amount = fields.EmbeddedDocumentField(VoiceTotalAmount, required=True)
     transactions = fields.EmbeddedDocumentField(VoiceTransactions, required=True)
     money_type = fields.StringField(required=True, choices=["VND", "USD", "EUR"], default="VND")
@@ -42,13 +43,19 @@ class Voice(Document):
     # Lưu raw transcription text để tham khảo
     raw_transcription = fields.StringField()
     
+    # AI processing metadata
+    processing_time = fields.FloatField(min_value=0)  # Thời gian xử lý AI (giây)
+    tokens_used = fields.IntField(min_value=0)  # Số token đã sử dụng
+    
     meta = {
         'collection': 'voices',
         'indexes': [
             'voice_id',
+            'cog_sub',
             'utc_time',
             'created_at',
             '-created_at',  # Descending index for latest first
+            ('cog_sub', '-created_at'),  # Compound index for user queries
         ],
         'ordering': ['-created_at']
     }
@@ -85,5 +92,7 @@ class Voice(Document):
                 ]
             },
             "money_type": self.money_type,
-            "utc_time": self.utc_time.isoformat() if self.utc_time else None  # type: ignore
+            "utc_time": self.utc_time.isoformat() if self.utc_time else None,  # type: ignore
+            "processing_time": self.processing_time,
+            "tokens_used": self.tokens_used
         }

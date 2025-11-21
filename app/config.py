@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     MONGO_HOST: str = Field(default="localhost")
     MONGO_PORT: int = Field(default=27017)
     MONGO_INITDB_ROOT_USERNAME: str = Field(default="mongo")
-    MONGO_INITDB_ROOT_PASSWORD: str = Field(default="password")
+    MONGO_INITDB_ROOT_PASSWORD: str = Field(default="12345")
     MONGO_INITDB_DATABASE: str = Field(default="VicobiMongoDB")
     
     GEMINI_API_KEY: str = Field(default="")
@@ -40,6 +40,10 @@ class Settings(BaseSettings):
     ALLOWED_ORIGINS: str = Field(default="http://localhost:3000,http://localhost:8000")
     ALLOWED_METHODS: str = Field(default="GET,POST,PUT,DELETE,OPTIONS")
     ALLOWED_HEADERS: str = Field(default="*")
+
+    USER_POOL_ID: str = Field(default="")
+    APP_CLIENT_ID: str = Field(default="")
+    REGION: str = Field(default="") 
     
     model_config = SettingsConfigDict(
         env_file=".env",
