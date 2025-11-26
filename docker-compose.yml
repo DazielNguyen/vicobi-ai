@@ -1,4 +1,41 @@
 services:
+  ai-service:
+    build:
+        context: .
+        dockerfile: Dockerfile
+    container_name: vicobi-ai-service
+    ports:
+      - "8000:8000" 
+    environment:
+      PROJECT_NAME: ${PROJECT_NAME}
+      API_PREFIX: ${API_PREFIX}
+      VERSION: ${VERSION}
+      ENVIRONMENT: ${ENVIRONMENT}
+      DEBUG: ${DEBUG}
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+      MONGO_INITDB_DATABASE: ${MONGO_INITDB_DATABASE}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      GEMINI_MODEL_VERSION: ${GEMINI_MODEL_VERSION}
+      GEMINI_TIMEOUT: ${GEMINI_TIMEOUT}
+      GEMINI_TEMPERATURE: ${GEMINI_TEMPERATURE}
+      GEMINI_MAX_RETRIES: ${GEMINI_MAX_RETRIES}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
+      ALLOWED_METHODS: ${ALLOWED_METHODS}
+      ALLOWED_HEADERS: ${ALLOWED_HEADERS}
+      USER_POOL_ID: ${USER_POOL_ID}
+      APP_CLIENT_ID: ${APP_CLIENT_ID}
+      REGION: ${REGION}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    depends_on:
+      mongo:
+        condition: service_healthy
+
   mongo:
     image: mongo:latest
     container_name: vicobi-mongo

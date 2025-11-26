@@ -24,20 +24,7 @@ class Settings(BaseSettings):
     GEMINI_TEMPERATURE: float = Field(default=0.1)
     GEMINI_MAX_RETRIES: int = Field(default=3)
     
-    MAX_UPLOAD_SIZE_MB: int = Field(default=10)
-    ALLOWED_EXTENSIONS: str = Field(default="jpg,jpeg,png,bmp")
-    
-    UPLOAD_DIR: str = Field(default="uploads")
-    OUTPUT_DIR: str = Field(default="output")
-    TEMP_DIR: str = Field(default="temp")
-    LOG_DIR: str = Field(default="logs")
-    
-    LOG_LEVEL: str = Field(default="INFO")
-    LOG_FILE: str = Field(default="logs/api.log")
-    LOG_ROTATION: str = Field(default="500 MB")
-    LOG_RETENTION: str = Field(default="10 days")
-    
-    ALLOWED_ORIGINS: str = Field(default="http://localhost:3000,http://localhost:8000")
+    ALLOWED_ORIGINS: str = Field(default="*")
     ALLOWED_METHODS: str = Field(default="GET,POST,PUT,DELETE,OPTIONS")
     ALLOWED_HEADERS: str = Field(default="*")
 
