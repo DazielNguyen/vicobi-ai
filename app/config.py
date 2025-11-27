@@ -4,7 +4,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     PROJECT_NAME: str = Field(default="VicobiAI")
-    API_PREFIX: str = Field(default="/api/v1")
+    API_PREFIX: str = Field(default="/api/v1/ai")
     VERSION: str = Field(default="1.0.0")
     ENVIRONMENT: str = Field(default="development")
     DEBUG: bool = Field(default=True)
@@ -24,9 +24,7 @@ class Settings(BaseSettings):
     GEMINI_TEMPERATURE: float = Field(default=0.1)
     GEMINI_MAX_RETRIES: int = Field(default=3)
     
-    ALLOWED_ORIGINS: str = Field(default="*")
-    ALLOWED_METHODS: str = Field(default="GET,POST,PUT,DELETE,OPTIONS")
-    ALLOWED_HEADERS: str = Field(default="*")
+    ALLOWED_ORIGINS: str = Field(default="http://localhost:3000,http://127.0.0.1:3000")
 
     USER_POOL_ID: str = Field(default="")
     APP_CLIENT_ID: str = Field(default="")
@@ -49,17 +47,7 @@ class Settings(BaseSettings):
     @property
     def allowed_origins_list(self) -> List[str]:
         return [origin.strip() for origin in self.ALLOWED_ORIGINS.split(",")]
-    
-    @property
-    def allowed_methods_list(self) -> List[str]:
-        return [method.strip() for method in self.ALLOWED_METHODS.split(",")]
-    
-    @property
-    def allowed_headers_list(self) -> List[str]:
-        return ["*"] if self.ALLOWED_HEADERS == "*" else [h.strip() for h in self.ALLOWED_HEADERS.split(",")]
-    
-    @property
-    def allowed_extensions_list(self) -> List[str]:
-        return [ext.strip().lower() for ext in self.ALLOWED_EXTENSIONS.split(",")]
+
+
 
 settings = Settings()
