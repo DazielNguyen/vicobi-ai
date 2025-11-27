@@ -43,7 +43,7 @@ async def root():
     return RedirectResponse(url="/docs")
 
 @app.get("/health", tags=["Health"])
-async def health_check(user=Depends(verify_jwt)):
+async def health_check():
     return {
         "status": "healthy",
         "service": settings.PROJECT_NAME,
