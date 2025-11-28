@@ -32,15 +32,14 @@ QUY TẮC:
 3. Chi tiêu (expenses): Các từ khóa như "mua", "chi", "trả", "mất", "tốn", "nộp", "đóng", "tiêu", "phí", "ăn", "uống", "thuê"
 4. transaction_type: PHẢI là "income" cho thu nhập hoặc "expense" cho chi tiêu
 5. amount: Chỉ là số, không có đơn vị tiền tệ
-6. amount_string: Dạng text của số tiền như trong transcription (VD: "50 nghìn", "2 triệu", "150k")
-7. description: Mô tả chi tiết về giao dịch từ transcription
-8. quantity: Mặc định là 1.0, nếu có đề cập số lượng thì điền vào
-9. total_amount.incomes: Tổng tất cả các giao dịch thu nhập
-10. total_amount.expenses: Tổng tất cả các giao dịch chi tiêu
-11. Nếu có nhiều giao dịch trong text, tách thành các item riêng biệt trong array
-12. Giữ nguyên dấu tiếng Việt
-13. Nếu transcription đề cập số tiền bằng chữ (ví dụ "hai triệu", "năm nghìn"), chuyển đổi thành số cho amount
-14. TỰ ĐỘNG CHỈNH SỬA CHÍNH TẢ VÀ CHUẨN HÓA:
+6. description: Mô tả chi tiết về giao dịch từ transcription
+7. quantity: Mặc định là 1.0, nếu có đề cập số lượng thì điền vào
+8. total_amount.incomes: Tổng tất cả các giao dịch thu nhập
+9. total_amount.expenses: Tổng tất cả các giao dịch chi tiêu
+10. Nếu có nhiều giao dịch trong text, tách thành các item riêng biệt trong array
+11. Giữ nguyên dấu tiếng Việt
+12. Nếu transcription đề cập số tiền bằng chữ (ví dụ "hai triệu", "năm nghìn"), chuyển đổi thành số cho amount
+13. TỰ ĐỘNG CHỈNH SỬA CHÍNH TẢ VÀ CHUẨN HÓA:
     - Sửa các lỗi chính tả tiếng Việt phổ biến (VD: "mua" thay vì "mua", "trả" thay vì "tra")
     - Sửa các từ thiếu dấu hoặc sai dấu thanh (VD: "tien" → "tiền", "cafe" → "cà phê")
     - Chuẩn hóa chữ hoa/thường: Chữ cái đầu câu viết hoa, còn lại viết thường

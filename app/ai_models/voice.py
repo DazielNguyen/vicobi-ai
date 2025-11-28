@@ -1,8 +1,6 @@
 from transformers import pipeline
 import torch
 from typing import Optional
-from datetime import datetime
-from app.services.gemini_extractor.gemini_service import get_gemini_service
 
 _transcriber = None
 
@@ -57,36 +55,3 @@ def transcribe_audio_file(wav_file_path: str, model_name: str = "vinai/PhoWhispe
         
     except Exception as e:
         raise Exception(f"Lỗi khi transcribe audio: {str(e)}")
-
-def parse_transcription_to_voice_data(transcription_text: str) -> dict:
-    """
-    Parse transcription text using Gemini to extract transaction data
-    
-    Args:
-        transcription_text: Text from PhoWhisper transcription
-        
-    Returns:
-        Dictionary containing voice_id, total_amount, transactions, money_type, utc_time, raw_transcription
-    """
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    voice_id = f"voice_{timestamp}"
-    
-    # Use Gemini to extract transaction data from transcription
-    gemini_service = get_gemini_service()
-    
-    # Log the transcription being processed
-    print(f"[DEBUG] Transcription text: {transcription_text}")
-    
-    parsed_data = gemini_service.extract_voice_data(transcription_text)
-    
-    # Log the parsed result
-    print(f"[DEBUG] Parsed data from Gemini: {parsed_data}")
-    
-    return {
-        "voice_id": voice_id,
-        "total_amount": parsed_data["total_amount"],
-        "transactions": parsed_data["transactions"],
-        "money_type": parsed_data.get("money_type", "VND"),
-        "utc_time": datetime.utcnow(),
-        "raw_transcription": transcription_text
-    }

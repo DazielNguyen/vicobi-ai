@@ -1,13 +1,15 @@
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, Optional
-from fastapi import HTTPException, UploadFile, logger
+from typing import Any, Dict
+from fastapi import HTTPException, UploadFile
+from loguru import logger
 from app.ai_models.bill import extract_bill_using_ocr_model, is_bill
 from app.database import is_mongodb_connected
 from app.models.bill import Bill, Bill, BillTotalAmount, BillTransactionDetail, BillTransactions, BillTransactions
 from app.schemas.bill import BillResponse
 from app.services.gemini_extractor.bill import GeminiBillExtractor
 from app.services.utils import Utils    
+import time 
 
 class BillService:
     """Service xử lý bill processing"""
@@ -62,7 +64,6 @@ class BillService:
                 total_amount=total_amount_doc,
                 transactions=transactions_doc,
                 utc_time=utc_time,
-                raw_transcription=transcription_text,
                 processing_time=schema_result.get("processing_time"),
                 tokens_used=schema_result.get("tokens_used")
             )

@@ -23,3 +23,4 @@ httpx==0.28.1
 pyjwt[crypto]==2.8.0
 onnx
 torchvision
+easyocr

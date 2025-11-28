@@ -1,4 +1,6 @@
 from pathlib import Path
+import cv2
+import easyocr
 import torch
 import torch.nn as nn
 from torchvision import models
@@ -33,19 +35,33 @@ try:
     checkpoint = torch.load(MODEL_PATH, map_location=device)
     loaded_model.load_state_dict(checkpoint['model_state_dict'])
     loaded_model.eval()
-    print("Model đã load thành công từ local (tương đối).")
 except Exception as e:
     print(f"Lỗi khi load model: {e}")
 
-IMG_SIZE = 224
 THRESHOLD = 0.85
 transform_inference = T.Compose([
-    T.Resize(256),
-    T.CenterCrop(IMG_SIZE),
-    T.ToTensor(),
+    T.ToTensor(), 
 ])
+ocr_reader = easyocr.Reader(['en', 'vi'])
+
+def is_bill_model_ready() -> bool:
+    """Kiểm tra xem model có load thành công và inference được không"""
+    if loaded_model is None:
+        return False
+    try:
+        dummy = torch.zeros(1, 3, 224, 224).to(device)
+        loaded_model.eval()
+        with torch.no_grad():
+            _ = loaded_model(dummy)
+        return True
+    except Exception:
+        return False
+
 def is_bill(file_bytes: bytes) -> bool:
-    
+    """
+    Nhận file bytes đã được frontend crop/resize,
+    trả về True nếu là hóa đơn, False nếu không.
+    """
     img_pil = Image.open(io.BytesIO(file_bytes)).convert('RGB')
     img_tensor = transform_inference(img_pil).unsqueeze(0).to(device)
 
@@ -57,6 +73,43 @@ def is_bill(file_bytes: bytes) -> bool:
 
     return P_BILL >= THRESHOLD or (P_BILL > P_NOT_BILL)
 
+
+
 # Hàm trích xuất OCR
-def extract_bill_using_ocr_model(file_path: str) -> dict:
-    return {"extracted_data": "OCR data"}
+def extract_bill_using_ocr_model(file_path: str, save_result_img: bool = False) -> str:
+    """
+    Nhận đường dẫn file ảnh hóa đơn (đã được frontend xử lý), trả về dict dữ liệu trích xuất từ OCR.
+    - file_path: đường dẫn file ảnh
+    - save_result_img: True để lưu ảnh có bounding box
+    """
+    # 1. Đọc ảnh
+    img = cv2.imread(file_path)
+    if img is None:
+        raise FileNotFoundError(f"Không tìm thấy file: {file_path}")
+
+    # 2. OCR với EasyOCR
+    results = ocr_reader.readtext(img)
+
+    extracted_texts = []
+    LINE_COLOR = (0, 255, 0)  # Xanh lá (BGR)
+    THICKNESS = 2
+
+    # 3. Vẽ bounding box và lưu văn bản + độ tin cậy
+    for (bbox, text, prob) in results:
+        top_left = tuple([int(val) for val in bbox[0]])
+        bottom_right = tuple([int(val) for val in bbox[2]])
+        cv2.rectangle(img, top_left, bottom_right, LINE_COLOR, THICKNESS)
+
+        extracted_texts.append({
+            "text": text,
+            "confidence": float(prob),
+            "bbox": [top_left, bottom_right]
+        })
+
+    # 4. Lưu ảnh kết quả nếu cần
+    if save_result_img:
+        ext = file_path.split('.')[-1]
+        result_img_path = file_path.replace(f".{ext}", f"_ocr.{ext}")
+        cv2.imwrite(result_img_path, img)
+
+    return extracted_texts

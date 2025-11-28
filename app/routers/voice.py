@@ -26,8 +26,15 @@ except Exception:
 @router.get("/health")
 async def health_check(user=Depends(verify_jwt)):
     """Kiểm tra trạng thái hoạt động của service"""
+    status = "healthy"
+    if voice_service is None:
+        status = "unhealthy"
+    if gemini_service is None or not gemini_service.is_ready():
+        status = "unhealthy"
+    if not is_mongodb_connected():
+        status = "unhealthy"
     return {
-        "status": "healthy",
+        "status": status,
         "gemini_service": gemini_service is not None and gemini_service.is_ready(),
         "voice_service": voice_service is not None,
         "mongodb": is_mongodb_connected()

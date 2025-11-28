@@ -1,28 +1,37 @@
-EXTRACTION PROMPT TEMPLATE:
+EXTRACTION PROMPT TEMPLATE FOR BILL TRANSCRIPT:
 --------------------------
-Analyze this invoice image and extract the following information in JSON format:
+Phân tích đoạn text transcription của hóa đơn này và trích xuất thông tin giao dịch theo định dạng JSON sau:
 
 {
-  "SELLER": "Store/Company name",
-  "ADDRESS": "Full address",
-  "TIMESTAMP": "Date and time of sale",
-  "PRODUCTS": [
-    {
-      "PRODUCT": "Product name and description",
-      "NUM": "Quantity",
-      "VALUE": "Price"
-    }
-  ],
-  "TOTAL_COST": "Total amount"
+  "total_amount": {
+    "expenses": <tổng chi tiêu dạng số>
+  },
+  "transactions": {
+    "expenses": [
+      {
+        "amount": <số tiền>,
+        "description": "<mô tả chi tiết>",
+        "quantity": 1.0
+      }
+    ]
+  },
+  "money_type": "VND"
 }
 
-Rules:
-1. Extract text exactly as shown in Vietnamese
-2. For PRODUCTS, capture complete product descriptions including unit prices
-3. NUM should be numeric (convert if needed)
-4. VALUE should be numeric without currency symbols
-5. TOTAL_COST is the final total amount
-6. If a field is not found, use empty string "" or empty array []
-7. Preserve Vietnamese diacritics accurately
+QUY TẮC TRÍCH XUẤT:  
+1. Chỉ quan tâm tới chi tiêu (expenses).  
+2. Chi tiêu bao gồm các từ khóa: "mua", "chi", "trả", "mất", "tốn", "nộp", "đóng", "tiêu", "phí", "ăn", "uống", "thuê".  
+3. amount: Chỉ là số, không kèm đơn vị tiền tệ.  
+4. description: Mô tả chi tiết từ transcription, giữ nguyên nội dung có ý nghĩa.  
+5. quantity: Mặc định là 1.0; nếu hóa đơn ghi số lượng, điền đúng số lượng.  
+6. Tổng chi tiêu: total_amount.expenses là tổng tất cả các giao dịch chi tiêu.  
+7. Nếu có nhiều giao dịch, tách thành các mục riêng biệt trong mảng transactions.expenses.  
+8. Chuyển đổi chữ thành số: Nếu hóa đơn viết số tiền bằng chữ (ví dụ: "hai triệu"), tự động chuyển sang số.  
+9. Chuẩn hóa văn bản:  
+   - Sửa lỗi chính tả phổ biến và dấu tiếng Việt  
+   - Chữ cái đầu câu viết hoa, còn lại viết thường  
+   - Viết hoa tên riêng, địa danh, thương hiệu (VD: "Hà Nội", "Shopee")  
+   - Không viết HOA toàn bộ trừ từ viết tắt (VD: "VND")  
+   - Chuẩn hóa khoảng trắng: loại bỏ thừa, thêm thiếu  
 
-Output only valid JSON, no additional text.
+Chỉ xuất ra JSON hợp lệ, không thêm bất kỳ giải thích nào khác.

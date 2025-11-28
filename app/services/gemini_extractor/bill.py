@@ -1,6 +1,6 @@
-from datetime import time
+import time
 from pathlib import Path
-from typing import Dict, Any, Union
+from typing import Dict, Any
 import google.generativeai as genai
 from .config import Config
 from ...schemas.base import BillTotalAmountSchema, BillTransactionsSchema, BillTransactionDetailSchema
@@ -34,26 +34,36 @@ class GeminiBillExtractor:
         
         model_version = self.config.get('api.model_version', 'gemini-2.5-flash')
         self.model = genai.GenerativeModel(model_version)
+        
+    def _ocr_list_to_string(self, ocr_output: list) -> str:
+        """
+        Chuyển OCR output (list dict) thành string từng dòng
+        """
+        if not ocr_output:
+            return ""
+        lines = [entry["text"] for entry in ocr_output if isinstance(entry, dict) and "text" in entry]
+        return "\n".join(lines)
     
     def extract_from_text(
         self,
-        text: str,
+        text: str | list,
         return_raw: bool = False
     ) -> Dict[str, Any]:
         if self.model is None:
             raise RuntimeError("Model not initialized")
-        
+
+        # Nếu là list OCR, chuyển sang string từng dòng
+        if isinstance(text, list):
+            text = self._ocr_list_to_string(text)
+
         if not text or not text.strip():
             raise ValueError("Text cannot be empty")
         
         full_prompt = f"{self.prompt_template}\n\nTranscript:\n{text}"
-        
         response = self.model.generate_content(full_prompt)
         response_text = response.text.strip()
         
-        tokens_used = 0
-        if hasattr(response, 'usage_metadata'):
-            tokens_used = getattr(response.usage_metadata, 'total_token_count', 0)
+        tokens_used = getattr(getattr(response, 'usage_metadata', None), 'total_token_count', 0)
         
         if return_raw:
             return {"raw_response": response_text, "tokens_used": tokens_used}
@@ -64,14 +74,9 @@ class GeminiBillExtractor:
         
         try:
             result = json.loads(response_text)
-            
-            if "total_amount" not in result:
-                result["total_amount"] = {"expenses": 0.0}
-            if "transactions" not in result:
-                result["transactions"] = {"expenses": []}
-            if "money_type" not in result:
-                result["money_type"] = "VND"
-            
+            result.setdefault("total_amount", {"expenses": 0.0})
+            result.setdefault("transactions", {"expenses": []})
+            result.setdefault("money_type", "VND")
             result["tokens_used"] = tokens_used
             return result
         
@@ -87,17 +92,15 @@ class GeminiBillExtractor:
     
     def extract_to_schema(
         self,
-        text: str
+        text: str | list
     ) -> Dict[str, Any]:
         """
-        Xử lý văn bản hóa đơn và trả về dữ liệu đã được xác thực theo schema
-                
-        Args:
-            text: Văn bản hóa đơn để xử lý
-            
-        Returns:
-            Dictionary chứa dữ liệu đã trích xuất theo schema
+        Xử lý văn bản hóa đơn (string hoặc OCR list dict) và trả về dữ liệu theo schema
         """
+        # Nếu là OCR list dict, chuyển sang string từng dòng
+        if isinstance(text, list):
+            text = self._ocr_list_to_string(text)
+
         start_time = time.time()
         json_result = self.extract_from_text(text, return_raw=False)
         
@@ -108,15 +111,12 @@ class GeminiBillExtractor:
             )
             
             transactions_data = json_result.get('transactions', {})
+            expenses = [
+                BillTransactionDetailSchema(**expense_data)
+                for expense_data in transactions_data.get('expenses', [])
+            ]
             
-            expenses = []
-            for expense_data in transactions_data.get('expenses', []):
-                expense = BillTransactionDetailSchema(**expense_data)
-                expenses.append(expense)
-            
-            transactions = BillTransactionsSchema(
-                expenses=expenses
-            )
+            transactions = BillTransactionsSchema(expenses=expenses)
         
             processing_time = time.time() - start_time
             

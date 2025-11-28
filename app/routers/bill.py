@@ -1,5 +1,7 @@
 from typing import Optional
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+import torch
+from app.ai_models.bill import is_bill_model_ready
 from app.auth import verify_jwt
 from app.config import settings
 from app.database import is_mongodb_connected
@@ -22,13 +24,24 @@ try:
 except Exception:
     pass
 
+
 @router.get("/health")
 async def health_check(user=Depends(verify_jwt)):
     """Kiểm tra trạng thái hoạt động của service"""
+    status = "healthy"
+    if bill_service is None:
+        status = "unhealthy"
+    if gemini_service is None or not gemini_service.is_ready():
+        status = "unhealthy"
+    if not is_bill_model_ready():
+        status = "unhealthy"
+    if not is_mongodb_connected():
+        status = "unhealthy"  
     return {
-        "status": "healthy",
+        "status": status,
         "gemini_service": gemini_service is not None and gemini_service.is_ready(),
         "bill_service": bill_service is not None,
+        "is_bill_model": is_bill_model_ready(),
         "mongodb": is_mongodb_connected()
     }
 

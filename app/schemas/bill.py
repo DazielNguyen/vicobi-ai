@@ -4,13 +4,12 @@ Bill schemas cho response và health check
 from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field
 from typing import Optional
-
 from app.schemas.base import BillTotalAmountSchema, BillTransactionsSchema
 
 
 class BillResponse(BaseModel):
     """Response trả về dữ liệu hóa đơn đã trích xuất"""
-    voice_id: str
+    bill_id: str
     total_amount: BillTotalAmountSchema
     transactions: BillTransactionsSchema
     money_type: str
@@ -22,7 +21,7 @@ class BillResponse(BaseModel):
         from_attributes=True,
         json_schema_extra={
             "example": {
-                "voice_id": "voice_20251112_001",
+                "bill_id": "bill_20251112_001",
                 "total_amount": {
                     "expenses": 3250000.0
                 },

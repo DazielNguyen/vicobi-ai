@@ -21,7 +21,7 @@ class Bill(Document):
     MongoDB document cho Bill data
     Lưu trữ dữ liệu đã xử lý từ transcription
     """
-    voice_id = fields.StringField(required=True, unique=True, max_length=100)
+    bill_id = fields.StringField(required=True, unique=True, max_length=100)
     cog_sub = fields.StringField(required=True, max_length=100)
     total_amount = fields.EmbeddedDocumentField(BillTotalAmount, required=True)
     transactions = fields.EmbeddedDocumentField(BillTransactions, required=True)
@@ -31,14 +31,13 @@ class Bill(Document):
     created_at = fields.DateTimeField(default=datetime.now(timezone.utc))
     updated_at = fields.DateTimeField(default=datetime.now(timezone.utc))
 
-    raw_transcription = fields.StringField()
     processing_time = fields.FloatField(min_value=0)
     tokens_used = fields.IntField(min_value=0)
 
     meta = {
         'collection': 'bills',
         'indexes': [
-            'voice_id',
+            'bill_id',
             'cog_sub',
             'utc_time',
             'created_at',
