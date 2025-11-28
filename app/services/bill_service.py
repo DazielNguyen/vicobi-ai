@@ -105,10 +105,10 @@ class BillService:
 
         #Save temp file
         content = await file.read()
-        if is_bill(content):
+        if not is_bill(content):
             raise HTTPException(
-                status_code=200,
-                detail="File là hóa đơn"
+                status_code=400,
+                detail="File không phải là hóa đơn"
             )
         temp_input_path = Utils.save_temp_file(file, content)
 
