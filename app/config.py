@@ -29,6 +29,8 @@ class Settings(BaseSettings):
     USER_POOL_ID: str = Field(default="")
     APP_CLIENT_ID: str = Field(default="")
     REGION: str = Field(default="") 
+
+    MODEL_BILL_FILE_NAME: str = Field(default="pytorch-bill_classifier_v1.pth")
     
     model_config = SettingsConfigDict(
         env_file=".env",
