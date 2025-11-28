@@ -8,7 +8,7 @@ import re
 import time
 
 class GeminiVoiceExtractor:
-    """Extract structured data from voice transcripts using Gemini API"""
+    """Extractor dịch vụ Gemini để xử lý văn bản trích xuất từ voice transcript và chuyển đổi nó thành dữ liệu có cấu trúc."""
     
     def __init__(self, config: Config):
         self.config = config
@@ -17,7 +17,7 @@ class GeminiVoiceExtractor:
         self._initialize_model()
     
     def _load_prompt_template(self) -> str:
-        """Load prompt template from extraction_voice_vi.txt"""
+        """Tải mẫu prompt từ extraction_voice_vi.txt"""
         prompt_path = Path(__file__).parent.parent.parent / "prompts" / "extraction_voice_vi.txt"
         try:
             if prompt_path.exists():
@@ -28,7 +28,7 @@ class GeminiVoiceExtractor:
         return "Extract transaction data from this voice transcript and convert to JSON"
     
     def _initialize_model(self) -> None:
-        """Initialize Gemini model with API key from config"""
+        """Khởi tạo mô hình Gemini với khóa API từ cấu hình"""
         api_key = self.config.get('api.api_key')
         if not api_key:
             raise ValueError("Gemini API key not found in configuration")
@@ -103,13 +103,13 @@ class GeminiVoiceExtractor:
         text: str
     ) -> Dict[str, Any]:
         """
-        Extract structured data from voice transcript and convert to Pydantic schema
+        Trích xuất dữ liệu có cấu trúc từ văn bản trích xuất giọng nói và chuyển đổi thành schema Pydantic
         
         Args:
-            text: Voice transcript text to process
+            text: Văn bản trích xuất từ voice transcript để xử lý
             
         Returns:
-            Dictionary containing validated schema objects with metadata
+            Dictionary chứa các đối tượng schema đã được xác thực cùng với metadata
         """
         start_time = time.time()
         

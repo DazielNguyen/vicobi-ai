@@ -23,7 +23,7 @@ _gemini_service_instance: Optional[GeminiService] = None
 
 def get_gemini_service(config: Optional[Config] = None) -> GeminiService:
     """
-    Get or create the singleton Gemini Service instance
+    Lấy thể hiện singleton của GeminiService
     """
     global _gemini_service_instance
     
@@ -34,6 +34,6 @@ def get_gemini_service(config: Optional[Config] = None) -> GeminiService:
 
 
 def reset_gemini_service() -> None:
-    """Reset the singleton service instance (useful for testing)"""
+    """Đặt lại thể hiện singleton của dịch vụ (hữu ích cho việc kiểm thử)"""
     global _gemini_service_instance
     _gemini_service_instance = None

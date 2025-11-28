@@ -15,7 +15,7 @@ class GeminiBillExtractor:
         self._initialize_model()
     
     def _load_prompt_template(self) -> str:
-        """Load prompt template from extraction_bill_vi.txt"""
+        """Tải mẫu prompt từ extraction_bill_vi.txt"""
         prompt_path = Path(__file__).parent.parent.parent / "prompts" / "extraction_bill_vi.txt"
         try:
             if prompt_path.exists():
