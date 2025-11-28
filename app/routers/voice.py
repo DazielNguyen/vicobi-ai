@@ -19,7 +19,7 @@ voice_service: Optional[VoiceService] = None
 try:
     gemini_service = get_gemini_service()
     if gemini_service:
-        voice_service = VoiceService(gemini_service)
+        voice_service = VoiceService(gemini_service.voice_extractor)
 except Exception:
     pass
 
@@ -39,12 +39,12 @@ async def process_audio(file: UploadFile = File(...), user=Depends(verify_jwt)):
     if voice_service is None:
         raise HTTPException(
             status_code=503,
-            detail="Voice Service not initialized. Check server logs."
+            detail="Voice Service chưa được khởi tạo. Kiểm tra lại server logs."
         )
     
-    cog_sub = user.get("sub")  # Get cognito sub from JWT
+    cog_sub = user.get("sub")
     if not cog_sub:
-        raise HTTPException(status_code=401, detail="User ID not found in token")
+        raise HTTPException(status_code=401, detail="User chưa được xác thực")
     
     return await voice_service.process_audio_file(file, cog_sub)
     
@@ -58,7 +58,7 @@ async def list_voices(
     try:
         cog_sub = user.get("sub")
         if not cog_sub:
-            raise HTTPException(status_code=401, detail="User ID not found in token")
+            raise HTTPException(status_code=401, detail="User chưa được xác thực")
         
         voices = Voice.objects(cog_sub=cog_sub).skip(skip).limit(limit)
         return [
@@ -72,5 +72,5 @@ async def list_voices(
             for voice in voices
         ]
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error fetching voices: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Lỗi khi lấy danh sách voice: {str(e)}")
 

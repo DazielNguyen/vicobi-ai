@@ -1,11 +1,13 @@
+from datetime import time
 from pathlib import Path
-from typing import Dict, Any, Union, TYPE_CHECKING, Optional
-from PIL import Image
-import google.generativeai as genai  # type: ignore
+from typing import Dict, Any, Union
+import google.generativeai as genai
 from .config import Config
 from ...schemas.base import BillTotalAmountSchema, BillTransactionsSchema, BillTransactionDetailSchema
+import json
+import re
 
-class GeminiInvoiceExtractor:
+class GeminiBillExtractor:
     def __init__(self, config: Config):
         self.config = config
         self.model = None
@@ -21,7 +23,6 @@ class GeminiInvoiceExtractor:
                     return f.read().strip()
         except Exception:
             pass
-        # Fallback default prompt
         return "Extract invoice data to JSON"
     
     def _initialize_model(self) -> None:
@@ -29,65 +30,85 @@ class GeminiInvoiceExtractor:
         if not api_key:
             raise ValueError("Gemini API key not found in configuration")
         
-        genai.configure(api_key=api_key)  # type: ignore
+        genai.configure(api_key=api_key)
         
-        model_version = self.config.get('api.model_version', 'gemini-1.5-flash')
-        self.model = genai.GenerativeModel(model_version)  # type: ignore
+        model_version = self.config.get('api.model_version', 'gemini-2.5-flash')
+        self.model = genai.GenerativeModel(model_version)
     
-    def extract(
+    def extract_from_text(
         self,
-        image_path: Union[str, Path],
+        text: str,
         return_raw: bool = False
     ) -> Dict[str, Any]:
         if self.model is None:
             raise RuntimeError("Model not initialized")
         
-        image_path = Path(image_path)
-        if not image_path.exists():
-            raise FileNotFoundError(f"Image not found: {image_path}")
+        if not text or not text.strip():
+            raise ValueError("Text cannot be empty")
         
-        image = Image.open(image_path)
+        full_prompt = f"{self.prompt_template}\n\nTranscript:\n{text}"
         
-        response = self.model.generate_content([self.prompt_template, image])
+        response = self.model.generate_content(full_prompt)
+        response_text = response.text.strip()
+        
+        tokens_used = 0
+        if hasattr(response, 'usage_metadata'):
+            tokens_used = getattr(response.usage_metadata, 'total_token_count', 0)
         
         if return_raw:
-            return {"raw_response": response.text}
+            return {"raw_response": response_text, "tokens_used": tokens_used}
+
+        json_match = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', response_text, re.DOTALL)
+        if json_match:
+            response_text = json_match.group(1)
         
-        import json
         try:
-            result = json.loads(response.text)
+            result = json.loads(response_text)
+            
+            if "total_amount" not in result:
+                result["total_amount"] = {"expenses": 0.0}
+            if "transactions" not in result:
+                result["transactions"] = {"expenses": []}
+            if "money_type" not in result:
+                result["money_type"] = "VND"
+            
+            result["tokens_used"] = tokens_used
             return result
-        except json.JSONDecodeError:
-            return {"extracted_text": response.text}
+        
+        except json.JSONDecodeError as e:
+            return {
+                "total_amount": {"expenses": 0.0},
+                "transactions": {"expenses": []},
+                "money_type": "VND",
+                "tokens_used": tokens_used,
+                "error": f"JSON decode error: {str(e)}",
+                "raw_response": response_text
+            }
     
     def extract_to_schema(
         self,
-        image_path: Union[str, Path]
+        text: str
     ) -> Dict[str, Any]:
         """
-        Extract structured data from invoice image and convert to Pydantic schema
-        
+        Xử lý văn bản hóa đơn và trả về dữ liệu đã được xác thực theo schema
+                
         Args:
-            image_path: Path to invoice image file
+            text: Văn bản hóa đơn để xử lý
             
         Returns:
-            Dictionary containing validated schema objects
+            Dictionary chứa dữ liệu đã trích xuất theo schema
         """
-        # First extract JSON from Gemini
-        json_result = self.extract(image_path, return_raw=False)
+        start_time = time.time()
+        json_result = self.extract_from_text(text, return_raw=False)
         
-        # Convert JSON to Pydantic schemas
         try:
-            # Parse total_amount
             total_amount_data = json_result.get('total_amount', {})
             total_amount = BillTotalAmountSchema(
                 expenses=total_amount_data.get('expenses', 0.0)
             )
             
-            # Parse transactions
             transactions_data = json_result.get('transactions', {})
             
-            # Parse expenses
             expenses = []
             for expense_data in transactions_data.get('expenses', []):
                 expense = BillTransactionDetailSchema(**expense_data)
@@ -96,12 +117,15 @@ class GeminiInvoiceExtractor:
             transactions = BillTransactionsSchema(
                 expenses=expenses
             )
+        
+            processing_time = time.time() - start_time
             
-            # Return structured result
             return {
                 'total_amount': total_amount,
                 'transactions': transactions,
-                'money_type': json_result.get('money_type', 'VND')
+                'money_type': json_result.get('money_type', 'VND'),
+                'processing_time': round(processing_time, 2),
+                'tokens_used': json_result.get('tokens_used', 0)
             }
             
         except Exception as e:

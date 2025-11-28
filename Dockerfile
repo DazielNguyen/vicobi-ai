@@ -1,5 +1,8 @@
 FROM python:3.13-slim
 
+RUN yum update -y && \
+    yum install -y ffmpeg
+
 WORKDIR /app
 
 COPY . /app

@@ -2,53 +2,28 @@
 Voice Service - Xử lý logic nghiệp vụ cho Voice processing
 """
 import os
-import tempfile
-from pathlib import Path
-from datetime import datetime
-from typing import Optional, Dict, Any
+from datetime import datetime, timezone
+from typing import Dict, Any
 from fastapi import UploadFile, HTTPException
 from loguru import logger
 
+from app.services.utils import Utils
 from app.utils import convert_audio_to_wav
 from app.ai_models.voice import transcribe_audio_file
 from app.models.voice import Voice, VoiceTransactionDetail, VoiceTransactions, VoiceTotalAmount
 from app.database import is_mongodb_connected
-from app.services.gemini_extractor.gemini_service import GeminiService
+from app.services.gemini_extractor.voice import GeminiVoiceExtractor
 from app.schemas.voice import VoiceResponse
 
 
 class VoiceService:
     """Service xử lý voice processing"""
-    
-    ALLOWED_EXTENSIONS = {'.mp3', '.aac', '.m4a', '.mp2', '.ogg', '.flac', '.wav', '.wma', '.opus'}
-    
-    def __init__(self, gemini_service: GeminiService):
-        self.gemini_service = gemini_service
-    
-    def validate_audio_file(self, filename: Optional[str]) -> None:
-        """Validate audio file format"""
-        if not filename:
-            raise HTTPException(status_code=400, detail="Tên file không hợp lệ")
         
-        file_ext = Path(filename).suffix.lower()
-        if file_ext not in self.ALLOWED_EXTENSIONS:
-            raise HTTPException(
-                status_code=400,
-                detail=f"File format không được hỗ trợ. Các format được chấp nhận: {', '.join(self.ALLOWED_EXTENSIONS)}"
-            )
-    
-    def save_temp_file(self, file: UploadFile, content: bytes) -> str:
-        """Save uploaded file to temp directory"""
-        temp_dir = tempfile.gettempdir()
-        temp_path = os.path.join(temp_dir, f"input_{file.filename}")
-        
-        with open(temp_path, "wb") as buffer:
-            buffer.write(content)
-        
-        return temp_path
-    
+    def __init__(self, voice_extractor: GeminiVoiceExtractor):
+        self.voice_extractor = voice_extractor
+
     def transcribe_audio(self, audio_path: str) -> str:
-        """Transcribe audio file to text"""
+        """Chuyển đổi file âm thanh sang văn bản sử dụng mô hình AI"""
         wav_path = convert_audio_to_wav(
             input_file=audio_path,
             sample_rate=16000,
@@ -72,7 +47,7 @@ class VoiceService:
     
     def extract_schema_from_text(self, text: str) -> Dict[str, Any]:
         """Extract structured data from transcription text using Gemini"""
-        return self.gemini_service.extract_from_text_to_schema(text)
+        return self.voice_extractor.extract_to_schema(text)
     
     def save_to_database(
         self,
@@ -82,7 +57,7 @@ class VoiceService:
         transcription_text: str,
         utc_time: datetime
     ) -> bool:
-        """Save voice data to MongoDB"""
+        """Lưu kết quả trích xuất vào cơ sở dữ liệu"""
         if not is_mongodb_connected():
             logger.warning("MongoDB not available, skipping database save")
             return False
@@ -131,6 +106,7 @@ class VoiceService:
             voice_doc.save()
             logger.success(f"✅ Saved voice_id={voice_id} to database")
             return True
+        
         except Exception as e:
             logger.error(f"❌ Failed to save to database: {e}")
             logger.exception(e)
@@ -142,7 +118,7 @@ class VoiceService:
         schema_result: Dict[str, Any],
         utc_time: datetime
     ) -> VoiceResponse:
-        """Create VoiceResponse from schema result"""
+        """Tạo response trả về cho client"""
         return VoiceResponse(
             voice_id=voice_id,
             total_amount=schema_result["total_amount"].model_dump(),
@@ -155,18 +131,26 @@ class VoiceService:
     
     async def process_audio_file(self, file: UploadFile, cog_sub: str) -> VoiceResponse:
         """
-        Process audio file: validate, transcribe, extract, save to DB, and return response
-        Main entry point for voice processing workflow
+        Xử lý file âm thanh: validate, transcribe, extract schema, lưu DB, trả về response
+        Args:
+            file (UploadFile): File âm thanh tải lên
+            cog_sub (str): Cognito sub của user
+        Returns:
+            VoiceResponse: Kết quả xử lý và trích xuất dữ liệu
         """
         temp_input_path = None
         
         try:
             # Validate file
-            self.validate_audio_file(file.filename)
+            if not Utils.is_valid_audio_file(file.filename):
+                raise HTTPException(
+                    status_code=400,
+                    detail="Định dạng file âm thanh không hợp lệ. Vui lòng tải lên file với định dạng: mp3, wav, m4a, flac, aac, ogg."
+                )
             
             # Save temp file
             content = await file.read()
-            temp_input_path = self.save_temp_file(file, content)
+            temp_input_path = Utils.save_temp_file(file, content)
             
             # Transcribe audio
             transcription_text = self.transcribe_audio(temp_input_path)
@@ -175,8 +159,8 @@ class VoiceService:
             schema_result = self.extract_schema_from_text(transcription_text)
             
             # Generate voice_id and timestamp
-            voice_id = f"voice_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}"
-            utc_time = datetime.utcnow()
+            voice_id = Utils.generate_unique_filename("voice", file.filename).replace(" ", "_")
+            utc_time = datetime.now(timezone.utc)
             
             # Save to database (best effort)
             self.save_to_database(voice_id, cog_sub, schema_result, transcription_text, utc_time)

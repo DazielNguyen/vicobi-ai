@@ -1,9 +1,11 @@
 from pathlib import Path
-from typing import Dict, Any, Optional
-import google.generativeai as genai  # type: ignore
+from typing import Dict, Any
+import google.generativeai as genai
 from .config import Config
 from ...schemas.base import VoiceTotalAmountSchema, VoiceTransactionsSchema, VoiceTransactionDetailSchema
-
+import json
+import re
+import time
 
 class GeminiVoiceExtractor:
     """Extract structured data from voice transcripts using Gemini API"""
@@ -23,7 +25,6 @@ class GeminiVoiceExtractor:
                     return f.read().strip()
         except Exception:
             pass
-        # Fallback default prompt
         return "Extract transaction data from this voice transcript and convert to JSON"
     
     def _initialize_model(self) -> None:
@@ -32,10 +33,10 @@ class GeminiVoiceExtractor:
         if not api_key:
             raise ValueError("Gemini API key not found in configuration")
         
-        genai.configure(api_key=api_key)  # type: ignore
+        genai.configure(api_key=api_key)
         
-        model_version = self.config.get('api.model_version', 'gemini-1.5-flash')
-        self.model = genai.GenerativeModel(model_version)  # type: ignore
+        model_version = self.config.get('api.model_version', 'gemini-2.5-flash')
+        self.model = genai.GenerativeModel(model_version)
     
     def extract_from_text(
         self,
@@ -43,14 +44,14 @@ class GeminiVoiceExtractor:
         return_raw: bool = False
     ) -> Dict[str, Any]:
         """
-        Extract structured data from voice transcript text
+        Xử lý văn bản trích xuất từ voice transcript và trả về dữ liệu có cấu trúc
         
         Args:
-            text: Voice transcript text to process
-            return_raw: If True, return raw response text instead of parsed JSON
+            text: Văn bản trích xuất từ voice transcript
+            return_raw: Nếu True, trả về văn bản phản hồi thô thay vì JSON đã phân tích
             
         Returns:
-            Dictionary containing extracted data or raw response
+            Dictionary chứa dữ liệu đã trích xuất hoặc phản hồi thô
         """
         if self.model is None:
             raise RuntimeError("Model not initialized")
@@ -58,24 +59,18 @@ class GeminiVoiceExtractor:
         if not text or not text.strip():
             raise ValueError("Text cannot be empty")
         
-        # Combine prompt template from file with text
         full_prompt = f"{self.prompt_template}\n\nTranscript:\n{text}"
         
         response = self.model.generate_content(full_prompt)
         response_text = response.text.strip()
         
-        # Extract token usage
         tokens_used = 0
         if hasattr(response, 'usage_metadata'):
             tokens_used = getattr(response.usage_metadata, 'total_token_count', 0)
         
         if return_raw:
             return {"raw_response": response_text, "tokens_used": tokens_used}
-        
-        import json
-        import re
-        
-        # Try to extract JSON from response (in case there's markdown formatting)
+
         json_match = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', response_text, re.DOTALL)
         if json_match:
             response_text = json_match.group(1)
@@ -83,7 +78,6 @@ class GeminiVoiceExtractor:
         try:
             result = json.loads(response_text)
             
-            # Validate and ensure structure exists
             if "total_amount" not in result:
                 result["total_amount"] = {"incomes": 0.0, "expenses": 0.0}
             if "transactions" not in result:
@@ -91,12 +85,10 @@ class GeminiVoiceExtractor:
             if "money_type" not in result:
                 result["money_type"] = "VND"
             
-            # Add token usage to result
             result["tokens_used"] = tokens_used
                 
             return result
         except json.JSONDecodeError as e:
-            # If JSON parsing fails, return empty structure with error info
             return {
                 "total_amount": {"incomes": 0.0, "expenses": 0.0},
                 "transactions": {"incomes": [], "expenses": []},
@@ -119,31 +111,24 @@ class GeminiVoiceExtractor:
         Returns:
             Dictionary containing validated schema objects with metadata
         """
-        import time
         start_time = time.time()
         
-        # First extract JSON from Gemini
         json_result = self.extract_from_text(text, return_raw=False)
         
-        # Convert JSON to Pydantic schemas
         try:
-            # Parse total_amount
             total_amount_data = json_result.get('total_amount', {})
             total_amount = VoiceTotalAmountSchema(
                 incomes=total_amount_data.get('incomes', 0.0),
                 expenses=total_amount_data.get('expenses', 0.0)
             )
             
-            # Parse transactions
             transactions_data = json_result.get('transactions', {})
             
-            # Parse incomes
             incomes = []
             for income_data in transactions_data.get('incomes', []):
                 income = VoiceTransactionDetailSchema(**income_data)
                 incomes.append(income)
             
-            # Parse expenses
             expenses = []
             for expense_data in transactions_data.get('expenses', []):
                 expense = VoiceTransactionDetailSchema(**expense_data)
@@ -153,11 +138,9 @@ class GeminiVoiceExtractor:
                 incomes=incomes,
                 expenses=expenses
             )
-            
-            # Calculate processing time
+        
             processing_time = time.time() - start_time
             
-            # Return structured result with metadata
             return {
                 'total_amount': total_amount,
                 'transactions': transactions,

@@ -1,8 +1,5 @@
-"""
-MongoDB models cho Voice data
-"""
 from mongoengine import Document, EmbeddedDocument, fields
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 class VoiceTransactionDetail(EmbeddedDocument):
@@ -34,18 +31,12 @@ class Voice(Document):
     total_amount = fields.EmbeddedDocumentField(VoiceTotalAmount, required=True)
     transactions = fields.EmbeddedDocumentField(VoiceTransactions, required=True)
     money_type = fields.StringField(required=True, choices=["VND", "USD", "EUR"], default="VND")
-    utc_time = fields.DateTimeField(default=datetime.utcnow)
-    
-    # Metadata
-    created_at = fields.DateTimeField(default=datetime.utcnow)
-    updated_at = fields.DateTimeField(default=datetime.utcnow)
-    
-    # Lưu raw transcription text để tham khảo
+    utc_time = fields.DateTimeField(default=datetime.now(timezone.utc))
+    created_at = fields.DateTimeField(default=datetime.now(timezone.utc))
+    updated_at = fields.DateTimeField(default=datetime.now(timezone.utc))
     raw_transcription = fields.StringField()
-    
-    # AI processing metadata
-    processing_time = fields.FloatField(min_value=0)  # Thời gian xử lý AI (giây)
-    tokens_used = fields.IntField(min_value=0)  # Số token đã sử dụng
+    processing_time = fields.FloatField(min_value=0)
+    tokens_used = fields.IntField(min_value=0)
     
     meta = {
         'collection': 'voices',
@@ -62,7 +53,7 @@ class Voice(Document):
     
     def save(self, *args, **kwargs):
         """Override save để tự động update updated_at"""
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(timezone.utc)
         return super(Voice, self).save(*args, **kwargs)
     
     def to_dict(self):
@@ -70,8 +61,8 @@ class Voice(Document):
         return {
             "voice_id": self.voice_id,
             "total_amount": {
-                "incomes": self.total_amount.incomes,  # type: ignore
-                "expenses": self.total_amount.expenses  # type: ignore
+                "incomes": self.total_amount.incomes,
+                "expenses": self.total_amount.expenses 
             },
             "transactions": {
                 "incomes": [
@@ -80,7 +71,7 @@ class Voice(Document):
                         "description": t.description,
                         "quantity": t.quantity
                     }
-                    for t in self.transactions.incomes  # type: ignore
+                    for t in self.transactions.incomes
                 ],
                 "expenses": [
                     {
@@ -88,11 +79,11 @@ class Voice(Document):
                         "description": t.description,
                         "quantity": t.quantity
                     }
-                    for t in self.transactions.expenses  # type: ignore
+                    for t in self.transactions.expenses 
                 ]
             },
             "money_type": self.money_type,
-            "utc_time": self.utc_time.isoformat() if self.utc_time else None,  # type: ignore
+            "utc_time": self.utc_time,
             "processing_time": self.processing_time,
             "tokens_used": self.tokens_used
         }
