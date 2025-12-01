@@ -110,7 +110,7 @@ class BedrockBillExtractor:
             }
     
     def extract_to_schema(self, text: str | list) -> Dict[str, Any]:
-        """Convert output thành Schema chuẩn (Logic giống hệt Gemini)"""
+        """Convert output thành Schema chuẩn cho Bill Response"""
         if isinstance(text, list):
             text = self._ocr_list_to_string(text)
 

@@ -12,7 +12,7 @@ from app.services.bedrock_extractor.bill import BedrockBillExtractor
 
 
 class BillService:
-    """Service xử lý Bill processing hỗ trợ cả Bedrock"""
+    """Service xử lý Bill processing sử dụng AWS Bedrock AI"""
     
     def __init__(
         self, 

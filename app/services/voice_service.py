@@ -13,7 +13,7 @@ from app.services.bedrock_extractor.voice import BedrockVoiceExtractor
 
 
 class VoiceService:
-    """Service xử lý voice processing hỗ trợ cả Gemini và Bedrock"""
+    """Service xử lý voice processing sử dụng AWS Bedrock AI"""
         
     def __init__(
         self, 
@@ -91,7 +91,7 @@ class VoiceService:
             print("="*50)
             # 5. Generate Metadata
             voice_id = Utils.generate_unique_filename("voice", file.filename).replace(" ", "_")
-            # Thêm suffix provider vào ID để dễ debug (vd: voice_abc_gemini)
+            # Thêm suffix provider vào ID để dễ debug (vd: voice_abc_bedrock)
             voice_id = f"{voice_id}_{provider_name}" 
             utc_time = datetime.now(timezone.utc)
             

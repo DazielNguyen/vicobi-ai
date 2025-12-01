@@ -56,7 +56,7 @@ async def main_lifespan(app: FastAPI):
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
-    description="API for voice transcription and bill/invoice processing using AI (Gemini + Bedrock)",
+    description="API for voice transcription and bill/invoice processing using AWS Bedrock AI",
     version=settings.VERSION,
     docs_url="/docs",
     redoc_url="/redoc",
