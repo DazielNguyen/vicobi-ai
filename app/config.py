@@ -17,12 +17,6 @@ class Settings(BaseSettings):
     MONGO_INITDB_ROOT_USERNAME: str = Field(default="mongo")
     MONGO_INITDB_ROOT_PASSWORD: str = Field(default="12345")
     MONGO_INITDB_DATABASE: str = Field(default="VicobiMongoDB")
-    
-    GEMINI_API_KEY: str = Field(default="")
-    GEMINI_MODEL_VERSION: str = Field(default="gemini-2.5-flash")
-    GEMINI_TIMEOUT: int = Field(default=30)
-    GEMINI_TEMPERATURE: float = Field(default=0.1)
-    GEMINI_MAX_RETRIES: int = Field(default=3)
 
     AWS_REGION: str = Field(default="ap-southeast-1")
     BEDROCK_MODEL_ID: str = Field(default="anthropic.claude-3-5-sonnet-20240620-v1:0")
