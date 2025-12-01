@@ -432,28 +432,42 @@ docker compose exec mongo mongorestore \
 
 ## 🧪 Kiểm thử API (Testing)
 
-**Kiểm tra Health:**
+**Kiểm tra Health Hệ thống:**
 
 ```bash
 curl http://localhost:8000/health
 ```
 
-**Chuyển đổi Giọng nói:**
+**Kiểm tra Health Voice Service:**
 
 ```bash
-curl -X POST "http://localhost:8000/api/v1/ai/voice/transcribe" \
-  -H "Content-Type: multipart/form-data" \
-  -F "file=@audio.mp3" \
-  -F "language=vi"
+curl -X GET "http://localhost:8000/api/v1/ai/voices/health" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
 ```
 
-**Trích xuất Hóa đơn:**
+**Xử lý Giọng nói (Voice Processing):**
 
 ```bash
-curl -X POST "http://localhost:8000/api/v1/ai/bill/extract" \
+curl -X POST "http://localhost:8000/api/v1/ai/voices/process" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   -H "Content-Type: multipart/form-data" \
-  -F "file=@bill.jpg" \
-  -F "language=vi"
+  -F "file=@audio.mp3"
+```
+
+**Kiểm tra Health Bill Service:**
+
+```bash
+curl -X GET "http://localhost:8000/api/v1/ai/bills/health" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+**Trích xuất Hóa đơn (Bill Extraction):**
+
+```bash
+curl -X POST "http://localhost:8000/api/v1/ai/bills/extract" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: multipart/form-data" \
+  -F "file=@bill.jpg"
 ```
 
 ---
@@ -518,14 +532,29 @@ Sau khi khởi động server, truy cập Swagger UI để xem đầy đủ tài
 
 ### Các Endpoints Chính
 
-| Method | Endpoint                      | Mô tả                               |
-| ------ | ----------------------------- | ----------------------------------- |
-| GET    | `/health`                     | Kiểm tra health                     |
-| POST   | `/api/v1/ai/voice/transcribe` | Chuyển đổi audio thành text         |
-| POST   | `/api/v1/ai/voice/extract`    | Trích xuất thông tin từ audio       |
-| POST   | `/api/v1/ai/bill/extract`     | Trích xuất thông tin từ ảnh hóa đơn |
-| GET    | `/api/v1/ai/bill/{id}`        | Lấy thông tin hóa đơn theo ID       |
-| GET    | `/api/v1/ai/voice/{id}`       | Lấy thông tin giọng nói theo ID     |
+#### Hệ thống (System)
+
+| Method | Endpoint  | Mô tả                             | Xác thực |
+| ------ | --------- | --------------------------------- | -------- |
+| GET    | `/health` | Kiểm tra health hệ thống tổng thể | Không    |
+| GET    | `/`       | Redirect đến API docs             | Không    |
+| GET    | `/docs`   | Swagger UI documentation          | Không    |
+
+#### Giọng nói (Voice Processing)
+
+| Method | Endpoint                    | Mô tả                                         | Xác thực |
+| ------ | --------------------------- | --------------------------------------------- | -------- |
+| GET    | `/api/v1/ai/voices/health`  | Kiểm tra health Voice Service                 | Có       |
+| POST   | `/api/v1/ai/voices/process` | Xử lý audio và trích xuất thông tin (Bedrock) | Có       |
+
+#### Hóa đơn (Bill Processing)
+
+| Method | Endpoint                   | Mô tả                                         | Xác thực |
+| ------ | -------------------------- | --------------------------------------------- | -------- |
+| GET    | `/api/v1/ai/bills/health`  | Kiểm tra health Bill Service                  | Có       |
+| POST   | `/api/v1/ai/bills/extract` | Trích xuất thông tin từ ảnh hóa đơn (Bedrock) | Có       |
+
+> **Lưu ý**: Tất cả các endpoint có đánh dấu "Có" ở cột Xác thực yêu cầu JWT token từ AWS Cognito trong header `Authorization: Bearer <token>`
 
 ---
 
