@@ -15,39 +15,39 @@ Hệ thống AI backend phục vụ cho ứng dụng Vicobi, cung cấp khả n�
 
 ### ✨ Tính năng chính
 
-#### 🎤 Voice Processing
+#### 🎤 Xử lý Giọng nói (Voice Processing)
 
 - **Speech Recognition**: Chuyển đổi audio thành text với PhoWhisper model
-- **Voice Information Extraction**: Trích xuất thông tin có cấu trúc từ nội dung giọng nói
-- **Multi-language Support**: Hỗ trợ tiếng Việt và tiếng Anh
-- **Format Support**: Hỗ trợ nhiều định dạng audio (MP3, WAV, M4A, etc.)
+- **Trích xuất thông tin**: Trích xuất thông tin có cấu trúc từ nội dung giọng nói
+- **Hỗ trợ đa ngôn ngữ**: Tiếng Việt và tiếng Anh
+- **Hỗ trợ định dạng**: MP3, WAV, M4A, v.v.
 
-#### 📄 Bill/Invoice Processing
+#### 📄 Xử lý Hóa đơn (Bill/Invoice Processing)
 
 - **OCR Processing**: Nhận dạng ký tự từ ảnh hóa đơn (EasyOCR)
-- **AI Extraction**: Trích xuất thông tin có cấu trúc (tên cửa hàng, số tiền, ngày tháng, items)
-- **Bill Classification**: Phân loại loại hóa đơn bằng PyTorch model
-- **Image Processing**: Xử lý và tối ưu hóa ảnh trước khi OCR
+- **Trích xuất bằng AI**: Trích xuất thông tin có cấu trúc (tên cửa hàng, số tiền, ngày tháng, sản phẩm)
+- **Phân loại hóa đơn**: Phân loại loại hóa đơn bằng PyTorch model
+- **Xử lý ảnh**: Xử lý và tối ưu hóa ảnh trước khi OCR
 
-#### 🔐 Authentication & Security
+#### 🔐 Xác thực & Bảo mật (Authentication & Security)
 
-- **AWS Cognito Integration**: Xác thực người dùng qua JWT tokens
-- **Secure Configuration**: Quản lý bảo mật với environment variables
-- **CORS Configuration**: Kiểm soát truy cập cross-origin
+- **Tích hợp AWS Cognito**: Xác thực người dùng qua JWT tokens
+- **Cấu hình bảo mật**: Quản lý bảo mật với environment variables
+- **Cấu hình CORS**: Kiểm soát truy cập cross-origin
 
-#### 🗄️ Data Management
+#### 🗄️ Quản lý Dữ liệu (Data Management)
 
-- **MongoDB Integration**: Lưu trữ NoSQL với MongoEngine ODM
-- **Database Models**: Models cho Voice, Bill, và User data
-- **Data Validation**: Validation với Pydantic schemas
+- **Tích hợp MongoDB**: Lưu trữ NoSQL với MongoEngine ODM
+- **Database Models**: Models cho dữ liệu Voice, Bill và User
+- **Xác thực dữ liệu**: Validation với Pydantic schemas
 
 ### 🛠️ Công nghệ sử dụng
 
 #### Backend Framework
 
-- **FastAPI** (v0.115.5): Modern, high-performance web framework cho Python
-- **Uvicorn**: ASGI server với async support
-- **Python 3.13**: Latest Python runtime
+- **FastAPI** (v0.115.5): Web framework hiện đại, hiệu suất cao cho Python
+- **Uvicorn**: ASGI server với hỗ trợ async
+- **Python 3.13**: Phiên bản Python mới nhất
 
 #### AI & Machine Learning
 
@@ -57,18 +57,18 @@ Hệ thống AI backend phục vụ cho ứng dụng Vicobi, cung cấp khả n�
 - **PhoWhisper**: Vietnamese speech recognition model
 - **EasyOCR**: OCR engine với Vietnamese support
 
-#### Database & Storage
+#### Cơ sở Dữ liệu & Lưu trữ (Database & Storage)
 
 - **MongoDB** (latest): NoSQL document database
 - **MongoEngine** (v0.29.1): ODM (Object-Document Mapper)
 
-#### Additional Libraries
+#### Thư viện Bổ sung (Additional Libraries)
 
-- **Pydantic**: Data validation và settings management
-- **Loguru**: Structured logging system
-- **Pillow & OpenCV**: Image processing
-- **PyDub & AudioOp**: Audio processing
-- **boto3**: AWS SDK cho Bedrock integration
+- **Pydantic**: Validation dữ liệu và quản lý cấu hình
+- **Loguru**: Hệ thống logging có cấu trúc
+- **Pillow & OpenCV**: Xử lý ảnh
+- **PyDub & AudioOp**: Xử lý audio
+- **boto3**: AWS SDK cho tích hợp Bedrock
 
 ---
 
@@ -140,77 +140,77 @@ vicobi-ai/
 
 ### Kiến trúc và luồng xử lý
 
-#### 1. Request Flow
+#### 1. Luồng xử lý Request (Request Flow)
 
 ```
 Client Request → FastAPI Router → Service Layer → AI Models/Extractors → Database → Response
 ```
 
-#### 2. Layers và Responsibilities
+#### 2. Các Layers và Trách nhiệm
 
 **Router Layer** (`app/routers/`)
 
 - Định nghĩa API endpoints
-- Validate request data với Pydantic schemas
-- Authentication check
-- Call service layer
+- Validate dữ liệu request với Pydantic schemas
+- Kiểm tra xác thực (authentication)
+- Gọi service layer
 - Format response
 
 **Service Layer** (`app/services/`)
 
-- Business logic chính
-- Orchestrate giữa AI models và database
-- Error handling và retry logic
-- Data transformation
+- Logic nghiệp vụ chính
+- Điều phối giữa AI models và database
+- Xử lý lỗi và retry logic
+- Chuyển đổi dữ liệu
 
 **AI Models Layer** (`app/ai_models/`, `app/services/bedrock_extractor/`)
 
-- Load và manage AI models
-- Speech recognition (PhoWhisper)
-- Information extraction (AWS Bedrock with Claude 3.5 Sonnet)
-- Bill classification (PyTorch)
-- OCR processing (EasyOCR)
+- Load và quản lý AI models
+- Nhận dạng giọng nói (PhoWhisper)
+- Trích xuất thông tin (AWS Bedrock với Claude 3.5 Sonnet)
+- Phân loại hóa đơn (PyTorch)
+- Xử lý OCR (EasyOCR)
 
 **Data Layer** (`app/models/`, `app/database.py`)
 
-- Database connection management
+- Quản lý kết nối database
 - MongoEngine document models
-- CRUD operations
+- Các thao tác CRUD
 
-#### 3. Key Components
+#### 3. Các Component Chính
 
 **app/main.py**
 
-- FastAPI application initialization
-- Lifespan management (startup/shutdown)
-- AI models pre-loading
-- CORS middleware configuration
-- Routes registration
+- Khởi tạo FastAPI application
+- Quản lý vòng đời (startup/shutdown)
+- Pre-loading AI models
+- Cấu hình CORS middleware
+- Đăng ký routes
 
 **app/config.py**
 
-- Centralized configuration management
-- Environment variables loading
-- Default values definition
+- Quản lý cấu hình tập trung
+- Load environment variables
+- Định nghĩa giá trị mặc định
 - Type-safe settings với Pydantic
 
 **app/auth.py**
 
-- AWS Cognito JWT token verification
-- User authentication decorator
-- Token validation logic
+- Xác thực AWS Cognito JWT token
+- Decorator xác thực người dùng
+- Logic validation token
 
 **app/services/bedrock_extractor/**
 
-- AWS Bedrock (Claude 3.5 Sonnet) integration
-- Structured information extraction từ text/image
+- Tích hợp AWS Bedrock (Claude 3.5 Sonnet)
+- Trích xuất thông tin có cấu trúc từ text/image
 - Prompt engineering với custom templates
 
 **app/ai_models/voice.py**
 
-- PhoWhisper model singleton loader
-- Audio transcription pipeline
-- Caching mechanism cho performance
+- Singleton loader cho PhoWhisper model
+- Pipeline chuyển đổi audio
+- Cơ chế caching để tối ưu hiệu suất
 
 ---
 
@@ -218,454 +218,197 @@ Client Request → FastAPI Router → Service Layer → AI Models/Extractors →
 
 ### Yêu cầu hệ thống
 
-- **Python**: 3.10 hoặc cao hơn (khuyên dùng 3.13)
-- **RAM**: Tối thiểu 8GB (khuyên dùng 16GB vì AI models)
-- **Disk Space**: ~5GB cho dependencies và models
-- **MongoDB**: Local installation hoặc Docker
-- **OS**: Windows, macOS, hoặc Linux
+- **Python**: 3.10+ (khuyên dùng 3.13)
+- **RAM**: Tối thiểu 8GB (khuyên dùng 16GB)
+- **Disk Space**: ~5GB cho dependencies và AI models
+- **Docker**: Version 20.10+ (nếu chạy bằng Docker)
 
-### Bước 1: Clone repository
+---
+
+## 📦 Phương án 1: Chạy với Virtual Environment
+
+### Bước 1: Clone và Setup Environment
 
 ```bash
+# Clone repository
 git clone https://gitlab.com/vicobi/vicobi-ai.git
 cd vicobi-ai
-```
 
-### Bước 2: Tạo Python Virtual Environment
-
-**Windows:**
-
-```cmd
+# Tạo virtual environment
 python -m venv venv
+
+# Activate virtual environment
+# Windows:
 venv\Scripts\activate
-```
-
-**macOS/Linux:**
-
-```bash
-python3 -m venv venv
+# macOS/Linux:
 source venv/bin/activate
-```
 
-### Bước 3: Cài đặt Dependencies
-
-```bash
+# Upgrade pip và cài dependencies
 pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-> ⏱️ **Lưu ý**: Quá trình cài đặt có thể mất 10-15 phút do các thư viện AI lớn (PyTorch, Transformers, etc.)
+> ⏱️ **Lưu ý**: Quá trình cài đặt mất 10-15 phút do các thư viện AI lớn
 
-### Bước 4: Cấu hình Environment Variables
+### Bước 2: Cấu hình Environment Variables
 
-1. **Tạo file `.env`** từ template:
-
-**Windows:**
+**Tạo file `.env`:**
 
 ```cmd
+# Windows
 copy .env-example .env
-```
 
-**macOS/Linux:**
-
-```bash
+# macOS/Linux
 cp .env-example .env
 ```
 
-2. **Chỉnh sửa file `.env`** với các giá trị thực tế:
+**Chỉnh sửa `.env` với thông tin thực tế:**
 
-````env
-# === Project Configuration ===
+```env
+# Project
 PROJECT_NAME=VicobiAI
 API_PREFIX=/api/v1/ai
-VERSION=1.0.0
 ENVIRONMENT=development
-DEBUG=True
 
-# === MongoDB Configuration ===
+# MongoDB
 MONGO_HOST=localhost
 MONGO_PORT=27017
 MONGO_INITDB_ROOT_USERNAME=mongo
-MONGO_INITDB_ROOT_PASSWORD=your_secure_password_here
+MONGO_INITDB_ROOT_PASSWORD=your_password
 MONGO_INITDB_DATABASE=VicobiMongoDB
 
-# === AWS Bedrock AI ===
+# AWS Bedrock
 AWS_REGION=ap-southeast-1
 BEDROCK_MODEL_ID=anthropic.claude-3-5-sonnet-20240620-v1:0
-BEDROCK_TIMEOUT=60
-BEDROCK_TEMPERATURE=0.0
-AWS_ACCESS_KEY_ID=your_aws_access_key
-AWS_SECRET_ACCESS_KEY=your_aws_secret_key
+AWS_ACCESS_KEY_ID=your_aws_key
+AWS_SECRET_ACCESS_KEY=your_aws_secret
 
-# === AWS Cognito Authentication ===
-USER_POOL_ID=your_cognito_user_pool_id
-APP_CLIENT_ID=your_cognito_app_client_id
+# AWS Cognito
+USER_POOL_ID=your_pool_id
+APP_CLIENT_ID=your_client_id
 REGION=ap-southeast-1
 
-# === CORS Configuration ===
-ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
-ALLOWED_METHODS=GET,POST,PUT,DELETE,OPTIONS
-ALLOWED_HEADERS=*
+# CORS
+ALLOWED_ORIGINS=http://localhost:3000
+```
 
-> 🔑 **Quan trọng**:
->
-> - **Bắt buộc có AWS credentials** để sử dụng Bedrock AI
-> - Đảm bảo AWS IAM user có quyền truy cập Bedrock service
-> - MongoDB credentials phải match với MongoDB instance của bạn
-
-### Bước 5: Khởi động MongoDB
-
-**Option 1: Sử dụng Docker (Khuyên dùng)**
+### Bước 3: Khởi động MongoDB
 
 ```bash
+# Chạy MongoDB với Docker
 docker run -d \
   --name vicobi-mongo \
   -p 27017:27017 \
   -e MONGO_INITDB_ROOT_USERNAME=mongo \
-  -e MONGO_INITDB_ROOT_PASSWORD=your_secure_password_here \
+  -e MONGO_INITDB_ROOT_PASSWORD=your_password \
   -e MONGO_INITDB_DATABASE=VicobiMongoDB \
   -v mongo_data:/data/db \
   mongo:latest
-````
-
-**Option 2: MongoDB Local Installation**
-
-**Windows:**
-
-- Download MongoDB Community Server từ [mongodb.com](https://www.mongodb.com/try/download/community)
-- Install và chạy MongoDB service
-- MongoDB sẽ chạy tại `mongodb://localhost:27017`
-
-**macOS:**
-
-```bash
-brew tap mongodb/brew
-brew install mongodb-community
-brew services start mongodb-community
 ```
 
-**Linux (Ubuntu/Debian):**
-
-```bash
-sudo apt-get install -y mongodb
-sudo systemctl start mongodb
-sudo systemctl enable mongodb
-```
-
-### Bước 6: Chạy Application
+### Bước 4: Chạy Application
 
 ```bash
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-**Parameters:**
+### Bước 5: Truy cập Application
 
-- `--reload`: Auto-reload khi code thay đổi (chỉ dùng development)
-- `--host 0.0.0.0`: Cho phép truy cập từ mọi network interface
-- `--port 8000`: Port của API server
-
-### Bước 7: Verify Application
-
-Sau khi khởi động thành công, bạn sẽ thấy logs:
-
-```
-INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
-INFO:     Started reloader process
---- ⏳ Đang tải PhoWhisper Model... ---
---- ✅ PhoWhisper Model đã sẵn sàng! ---
-✅ STARTUP: Toàn bộ AI Service & Model đã sẵn sàng nhận request!
-```
-
-**Truy cập các URLs:**
-
-- **API Server**: http://localhost:8000
-- **API Documentation (Swagger UI)**: http://localhost:8000/docs
-- **Alternative API Docs (ReDoc)**: http://localhost:8000/redoc
-- **Health Check**: http://localhost:8000/health
-
-### Testing API
-
-**Health Check:**
-
-```bash
-curl http://localhost:8000/health
-```
-
-**Test Voice Transcription:**
-
-```bash
-curl -X POST "http://localhost:8000/api/v1/ai/voice/transcribe" \
-  -H "Content-Type: multipart/form-data" \
-  -F "file=@your_audio_file.mp3" \
-  -F "language=vi"
-```
-
-**Test Bill Extraction:**
-
-```bash
-curl -X POST "http://localhost:8000/api/v1/ai/bill/extract" \
-  -H "Content-Type: multipart/form-data" \
-  -F "file=@your_bill_image.jpg" \
-  -F "language=vi"
-```
-
-### Troubleshooting
-
-**Problem: Port 8000 already in use**
-
-```bash
-# Đổi sang port khác
-uvicorn app.main:app --reload --port 8001
-```
-
-**Problem: MongoDB connection failed**
-
-- Kiểm tra MongoDB đã chạy: `docker ps` hoặc `systemctl status mongodb`
-- Verify credentials trong `.env` file
-- Check MongoDB logs: `docker logs vicobi-mongo`
-
-**Problem: AI Models loading too slow**
-
-- Models sẽ tự động download lần đầu tiên (có thể mất 5-10 phút)
-- Đảm bảo có kết nối internet tốt
-- Models được cache sau lần load đầu
-
-**Problem: AWS Bedrock authentication failed**
-
-- Verify AWS credentials trong `.env`
-- Check AWS IAM permissions cho Bedrock (cần policy `AmazonBedrockFullAccess`)
-- Đảm bảo model ID đúng và available trong region của bạn
-- Test AWS credentials: `aws bedrock list-foundation-models --region ap-southeast-1`
+- 🌐 **API Server**: http://localhost:8000
+- 📚 **API Documentation**: http://localhost:8000/docs
+- ❤️ **Health Check**: http://localhost:8000/health
 
 ---
 
-## 🐳 Hướng dẫn chạy Docker
+## 🐳 Phương án 2: Chạy với Docker Compose
 
-Docker setup đơn giản hóa deployment bằng cách đóng gói toàn bộ application và dependencies vào containers.
+---
 
-### Yêu cầu
-
-- **Docker**: Version 20.10 hoặc cao hơn
-- **Docker Compose**: Version 2.0 hoặc cao hơn
-- **Disk Space**: ~8GB cho images và volumes
-
-### Cài đặt Docker
-
-**Windows:**
-
-- Download và cài [Docker Desktop for Windows](https://www.docker.com/products/docker-desktop)
-- Khởi động Docker Desktop
-
-**macOS:**
-
-- Download và cài [Docker Desktop for Mac](https://www.docker.com/products/docker-desktop)
-- Hoặc dùng Homebrew: `brew install --cask docker`
-
-**Linux (Ubuntu/Debian):**
+### Bước 1: Clone và Cấu hình
 
 ```bash
-# Install Docker Engine
-curl -fsSL https://get.docker.com -o get-docker.sh
-sudo sh get-docker.sh
+# Clone repository
+git clone https://gitlab.com/vicobi/vicobi-ai.git
+cd vicobi-ai
 
-# Install Docker Compose
-sudo apt-get install docker-compose-plugin
-
-# Add user to docker group
-sudo usermod -aG docker $USER
-newgrp docker
-```
-
-### Bước 1: Cấu hình Environment
-
-1. **Tạo file `.env`**:
-
-**Windows:**
-
-```cmd
+# Tạo file .env
+# Windows:
 copy .env-example .env
-```
-
-**macOS/Linux:**
-
-```bash
+# macOS/Linux:
 cp .env-example .env
 ```
 
-2. **Update file `.env`** với các credentials thực tế (xem phần "Hướng dẫn chạy code trực tiếp" phía trên)
+**Chỉnh sửa file `.env`** với credentials thực tế (tương tự như Phương án 1)
 
-### Bước 2: Build và Run với Docker Compose
-
-**Start toàn bộ services (AI Service + MongoDB):**
+### Bước 2: Chạy Docker Compose
 
 ```bash
+# Build và start tất cả services
 docker compose up -d
 ```
 
-**Parameters:**
-
-- `-d`: Detached mode (chạy background)
-- Nếu muốn xem logs realtime, bỏ `-d`
-
-**Logs output:**
+Output:
 
 ```
 [+] Running 3/3
- ✔ Network vicobi-ai_default       Created
- ✔ Container vicobi-mongo          Started
- ✔ Container vicobi-ai-service     Started
+ ✔ Network vicobi-ai_default    Created
+ ✔ Container vicobi-mongo       Started
+ ✔ Container vicobi-ai-service  Started
 ```
 
-### Bước 3: Verify Containers
-
-**Check running containers:**
+### Bước 3: Kiểm tra Services
 
 ```bash
+# Check container status
 docker compose ps
-```
 
-Expected output:
-
-```
-NAME                   IMAGE              STATUS              PORTS
-vicobi-ai-service      vicobi-ai:latest   Up (healthy)        0.0.0.0:8000->8000/tcp
-vicobi-mongo           mongo:latest       Up (healthy)        0.0.0.0:27017->27017/tcp
-```
-
-**View logs:**
-
-```bash
-# All services
+# Xem logs
 docker compose logs -f
-
-# Specific service
-docker compose logs -f ai-service
-docker compose logs -f mongo
 ```
 
-### Bước 4: Access Application
+### Bước 4: Truy cập Application
 
-- **API Server**: http://localhost:8000
-- **API Docs**: http://localhost:8000/docs
-- **Health Check**: http://localhost:8000/health
-- **MongoDB**: mongodb://localhost:27017
+- 🌐 **API Server**: http://localhost:8000
+- 📚 **API Documentation**: http://localhost:8000/docs
+- ❤️ **Health Check**: http://localhost:8000/health
 
-### Docker Commands Cheat Sheet
-
-**Stop services:**
+### Commands thường dùng
 
 ```bash
+# Stop services
 docker compose stop
-```
 
-**Start services (without rebuilding):**
-
-```bash
+# Start services
 docker compose start
-```
 
-**Restart services:**
-
-```bash
+# Restart services
 docker compose restart
-```
 
-**Stop và remove containers:**
-
-```bash
+# Stop và xóa containers
 docker compose down
-```
 
-**Stop và remove containers + volumes (⚠️ xóa data):**
-
-```bash
+# Stop và xóa containers + data (⚠️ cẩn thận)
 docker compose down -v
-```
 
-**Rebuild images:**
-
-```bash
+# Rebuild images
 docker compose build --no-cache
 docker compose up -d
-```
 
-**View resource usage:**
+# Xem logs
+docker compose logs -f ai-service
+docker compose logs -f mongo
 
-```bash
+# Xem resource usage
 docker stats
-```
 
-**Execute command trong container:**
-
-```bash
-# Access bash shell
+# Access container shell
 docker compose exec ai-service bash
-
-# Run Python command
-docker compose exec ai-service python -c "print('Hello')"
-
-# Access MongoDB shell
 docker compose exec mongo mongosh -u mongo -p your_password
 ```
 
-**View container details:**
+### Sao lưu & Khôi phục MongoDB (Backup & Restore)
 
-```bash
-docker compose logs ai-service --tail 100
-docker inspect vicobi-ai-service
-```
-
-### Dockerfile Overview
-
-```dockerfile
-FROM python:3.13-slim          # Base image với Python 3.13
-
-# Install system dependencies
-RUN apt-get update -y && \
-    apt-get install -y ffmpeg && \
-    apt-get clean
-
-WORKDIR /app
-
-# Install Python dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy application code
-COPY . .
-
-EXPOSE 8000
-
-# Start application
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
-```
-
-### Docker Compose Services
-
-**ai-service:**
-
-- Build từ Dockerfile local
-- Expose port 8000
-- Depends on MongoDB
-- Auto-restart on failure
-- Health check mỗi 90s
-
-**mongo:**
-
-- Official MongoDB image
-- Data persistence với named volume
-- Authentication enabled
-- Health check via mongosh
-
-### Volumes và Data Persistence
-
-**List volumes:**
-
-```bash
-docker volume ls
-```
-
-**Backup MongoDB data:**
+**Sao lưu:**
 
 ```bash
 docker compose exec mongo mongodump \
@@ -675,7 +418,7 @@ docker compose exec mongo mongodump \
   --out /data/backup
 ```
 
-**Restore MongoDB data:**
+**Khôi phục:**
 
 ```bash
 docker compose exec mongo mongorestore \
@@ -685,177 +428,133 @@ docker compose exec mongo mongorestore \
   /data/backup
 ```
 
-### Troubleshooting Docker
+---
 
-**Problem: Port already in use**
+## 🧪 Kiểm thử API (Testing)
+
+**Kiểm tra Health:**
 
 ```bash
-# Find process using port
+curl http://localhost:8000/health
+```
+
+**Chuyển đổi Giọng nói:**
+
+```bash
+curl -X POST "http://localhost:8000/api/v1/ai/voice/transcribe" \
+  -H "Content-Type: multipart/form-data" \
+  -F "file=@audio.mp3" \
+  -F "language=vi"
+```
+
+**Trích xuất Hóa đơn:**
+
+```bash
+curl -X POST "http://localhost:8000/api/v1/ai/bill/extract" \
+  -H "Content-Type: multipart/form-data" \
+  -F "file=@bill.jpg" \
+  -F "language=vi"
+```
+
+---
+
+## 🔧 Khắc phục Sự cố (Troubleshooting)
+
+### Lỗi: Port đã được sử dụng
+
+```bash
 # Windows
 netstat -ano | findstr :8000
 # macOS/Linux
 lsof -i :8000
 
-# Change port in docker-compose.yml
-ports:
-  - "8001:8000"  # host:container
+# Đổi port trong docker-compose.yml hoặc khi chạy uvicorn
+uvicorn app.main:app --reload --port 8001
 ```
 
-**Problem: Container keeps restarting**
+### Lỗi: Kết nối MongoDB thất bại
 
 ```bash
-# Check logs
-docker compose logs ai-service --tail 50
+# Kiểm tra MongoDB đang chạy
+docker ps | grep mongo
 
-# Check container status
-docker compose ps
+# Xem logs
+docker compose logs mongo
+
+# Test kết nối
+docker compose exec mongo mongosh -u mongo -p your_password
+```
+
+### Lỗi: Container liên tục restart
+
+```bash
+# Xem logs
+docker compose logs ai-service --tail 100
+
+# Xem chi tiết container
 docker inspect vicobi-ai-service
 ```
 
-**Problem: Out of disk space**
+### Lỗi: AI Models load chậm
 
-```bash
-# Remove unused images/containers
-docker system prune -a
+- Lần đầu tiên download models mất 5-10 phút
+- Đảm bảo kết nối internet ổn định
+- Models được cache sau lần load đầu
 
-# Remove specific volumes
-docker volume rm vicobi-ai_mongo_data
-```
+### Lỗi: AWS Bedrock xác thực thất bại
 
-**Problem: Build fails**
-
-```bash
-# Clean build without cache
-docker compose build --no-cache --pull
-
-# Check Docker daemon
-docker info
-```
-
-**Problem: MongoDB connection issues**
-
-```bash
-# Test MongoDB connection
-docker compose exec mongo mongosh \
-  mongodb://mongo:your_password@localhost:27017/VicobiMongoDB
-
-# Check MongoDB logs
-docker compose logs mongo
-```
-
-### Production Deployment Tips
-
-1. **Use production-grade configurations**:
-
-   - Set `ENVIRONMENT=production` trong `.env`
-   - Set `DEBUG=False`
-   - Use strong passwords
-   - Enable SSL/TLS
-
-2. **Resource limits** (thêm vào docker-compose.yml):
-
-```yaml
-services:
-  ai-service:
-    deploy:
-      resources:
-        limits:
-          cpus: "2"
-          memory: 4G
-        reservations:
-          cpus: "1"
-          memory: 2G
-```
-
-3. **Logging configuration**:
-
-```yaml
-services:
-  ai-service:
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-```
-
-4. **Use Docker secrets** cho sensitive data thay vì .env file
-
-5. **Regular backups** cho MongoDB volume
+- Kiểm tra credentials trong file `.env`
+- Kiểm tra IAM permissions: `AmazonBedrockFullAccess`
+- Test: `aws bedrock list-foundation-models --region ap-southeast-1`
+- Đảm bảo model ID có sẵn trong region
 
 ---
 
-## 📚 API Documentation
+## 📚 Tài liệu API (API Documentation)
 
-Sau khi khởi động server, truy cập Swagger UI để xem đầy đủ API documentation và test endpoints:
+Sau khi khởi động server, truy cập Swagger UI để xem đầy đủ tài liệu API và test endpoints:
 
 👉 **http://localhost:8000/docs**
 
-### Main Endpoints
+### Các Endpoints Chính
 
-| Method | Endpoint                      | Description                         |
+| Method | Endpoint                      | Mô tả                               |
 | ------ | ----------------------------- | ----------------------------------- |
-| GET    | `/health`                     | Health check endpoint               |
+| GET    | `/health`                     | Kiểm tra health                     |
 | POST   | `/api/v1/ai/voice/transcribe` | Chuyển đổi audio thành text         |
 | POST   | `/api/v1/ai/voice/extract`    | Trích xuất thông tin từ audio       |
 | POST   | `/api/v1/ai/bill/extract`     | Trích xuất thông tin từ ảnh hóa đơn |
-| GET    | `/api/v1/ai/bill/{id}`        | Lấy thông tin bill theo ID          |
-| GET    | `/api/v1/ai/voice/{id}`       | Lấy thông tin voice theo ID         |
+| GET    | `/api/v1/ai/bill/{id}`        | Lấy thông tin hóa đơn theo ID       |
+| GET    | `/api/v1/ai/voice/{id}`       | Lấy thông tin giọng nói theo ID     |
 
 ---
 
-## 🔒 Security Best Practices
+## 🔒 Thực hành Bảo mật Tốt nhất (Security Best Practices)
 
 - ⚠️ **KHÔNG BAO GIỜ** commit file `.env` vào Git
-- 🔑 Sử dụng strong passwords cho MongoDB
-- 🛡️ Rotate API keys định kỳ
-- 📝 Review logs thường xuyên để phát hiện anomalies
-- 🚫 Không expose sensitive data trong logs
-- 🔐 Sử dụng HTTPS trong production
-- 👥 Implement rate limiting cho public APIs
+- 🔑 Sử dụng mật khẩu mạnh cho MongoDB
+- 🛡️ Thay đổi API keys định kỳ
+- 📝 Kiểm tra logs thường xuyên để phát hiện bất thường
+- 🚫 Không để lộ dữ liệu nhạy cảm trong logs
+- 🔐 Sử dụng HTTPS trong môi trường production
+- 👥 Triển khai rate limiting cho public APIs
 
 ---
 
-## 📊 Monitoring & Logging
+## 📊 Giám sát & Logging (Monitoring & Logging)
 
-**Logs location:**
+**Vị trí Logs:**
 
 - Development: Console output
 - Docker: `docker compose logs -f`
-- Production: Configure external logging service
+- Production: Cấu hình external logging service
 
-**Health monitoring:**
+**Giám sát Health:**
 
 ```bash
-# Simple health check
+# Kiểm tra health đơn giản
 curl http://localhost:8000/health
 
-# Detailed monitoring với watch
+# Giám sát chi tiết với watch
 watch -n 5 'curl -s http://localhost:8000/health | jq'
 ```
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
----
-
-## 📄 License
-
-[MIT License](LICENSE)
-
----
-
-## 👥 Team
-
-**Vicobi Development Team**
-
-Made with ❤️ by Vicobi Team
