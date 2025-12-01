@@ -8,27 +8,17 @@ from app.schemas.bill import BillResponse
 from app.services.utils import Utils
 from app.ai_models.bill import extract_bill_using_ocr_model, is_bill
 from app.database import is_mongodb_connected
-from app.services.gemini_extractor.bill import GeminiBillExtractor
 from app.services.bedrock_extractor.bill import BedrockBillExtractor
 
 
 class BillService:
-    """Service xử lý Bill processing hỗ trợ cả Gemini và Bedrock"""
+    """Service xử lý Bill processing hỗ trợ cả Bedrock"""
     
     def __init__(
         self, 
-        gemini_extractor: Optional[GeminiBillExtractor] = None,
         bedrock_extractor: Optional[BedrockBillExtractor] = None
     ):
-        self.gemini_extractor = gemini_extractor
         self.bedrock_extractor = bedrock_extractor
-
-    async def process_via_gemini(self, file: UploadFile, cog_sub: str) -> BillResponse:
-        """Xử lý hóa đơn sử dụng Google Gemini"""
-        if not self.gemini_extractor:
-            raise HTTPException(status_code=503, detail="Gemini Bill Service chưa được cấu hình")
-        
-        return await self._process_pipeline(file, cog_sub, self.gemini_extractor, "gemini")
 
     async def process_via_bedrock(self, file: UploadFile, cog_sub: str) -> BillResponse:
         """Xử lý hóa đơn sử dụng AWS Bedrock"""
@@ -41,7 +31,7 @@ class BillService:
         self,
         file: UploadFile,
         cog_sub: str,
-        extractor: Union[GeminiBillExtractor, BedrockBillExtractor],
+        extractor: Union[BedrockBillExtractor],
         provider_name: str
     ) -> BillResponse:
         """
@@ -75,7 +65,6 @@ class BillService:
             ocr_result = extract_bill_using_ocr_model(temp_input_path)
 
             # 5. Extract Data to Schema (OCR Result -> JSON Schema)
-            # Gọi Extractor được truyền vào (Gemini hoặc Bedrock)
             schema_result = extractor.extract_to_schema(ocr_result)
 
             # 6. Generate Metadata

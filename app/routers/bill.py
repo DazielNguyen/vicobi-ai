@@ -23,33 +23,31 @@ async def health_check(
     service: BillService = Depends(get_bill_service)
 ):
     """Kiểm tra trạng thái Bill Service"""
-    gemini_ready = service.gemini_extractor is not None
     bedrock_ready = service.bedrock_extractor is not None
     mongo_ready = is_mongodb_connected()
 
     return {
-        "status": "healthy" if (gemini_ready or bedrock_ready) and mongo_ready else "degraded",
+        "status": "healthy" if (bedrock_ready) and mongo_ready else "degraded",
         "providers": {
-            "gemini": "connected" if gemini_ready else "not_configured",
             "bedrock": "connected" if bedrock_ready else "not_configured"
         },
         "mongodb": "connected" if mongo_ready else "disconnected"
     }
 
-@router.post("/extract/gemini", response_model=BillResponse)
-async def process_bill_gemini(
-    file: UploadFile = File(...), 
-    user=Depends(verify_jwt),
-    service: BillService = Depends(get_bill_service)
-):
-    """Xử lý hóa đơn bằng [Google Gemini]"""
-    cog_sub = user.get("sub")
-    if not cog_sub:
-        raise HTTPException(status_code=401, detail="User chưa được xác thực")
+# @router.post("/extract/gemini", response_model=BillResponse)
+# async def process_bill_gemini(
+#     file: UploadFile = File(...), 
+#     user=Depends(verify_jwt),
+#     service: BillService = Depends(get_bill_service)
+# ):
+#     """Xử lý hóa đơn bằng [Google Gemini]"""
+#     cog_sub = user.get("sub")
+#     if not cog_sub:
+#         raise HTTPException(status_code=401, detail="User chưa được xác thực")
     
-    return await service.process_via_gemini(file, cog_sub)
+#     return await service.process_via_gemini(file, cog_sub)
 
-@router.post("/extract/bedrock", response_model=BillResponse)
+@router.post("/extract", response_model=BillResponse)
 async def process_bill_bedrock(
     file: UploadFile = File(...), 
     user=Depends(verify_jwt),

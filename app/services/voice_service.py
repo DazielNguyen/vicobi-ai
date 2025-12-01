@@ -9,9 +9,6 @@ from app.ai_models.voice import transcribe_audio_file
 from app.models.voice import Voice, VoiceTransactionDetail, VoiceTransactions, VoiceTotalAmount
 from app.database import is_mongodb_connected
 from app.schemas.voice import VoiceResponse
-
-# Import cả 2 Extractors
-from app.services.gemini_extractor.voice import GeminiVoiceExtractor
 from app.services.bedrock_extractor.voice import BedrockVoiceExtractor
 
 
@@ -20,10 +17,8 @@ class VoiceService:
         
     def __init__(
         self, 
-        gemini_extractor: Optional[GeminiVoiceExtractor] = None,
         bedrock_extractor: Optional[BedrockVoiceExtractor] = None
     ):
-        self.gemini_extractor = gemini_extractor
         self.bedrock_extractor = bedrock_extractor
 
     def transcribe_audio(self, audio_path: str) -> str:
@@ -53,15 +48,6 @@ class VoiceService:
                 except Exception:
                     pass
 
-    async def process_via_gemini(self, file: UploadFile, cog_sub: str) -> VoiceResponse:
-        """
-        Xử lý file âm thanh sử dụng Google Gemini để trích xuất dữ liệu
-        """
-        if not self.gemini_extractor:
-            raise HTTPException(status_code=503, detail="Gemini Service chưa được cấu hình")
-
-        return await self._process_pipeline(file, cog_sub, self.gemini_extractor, "gemini")
-
     async def process_via_bedrock(self, file: UploadFile, cog_sub: str) -> VoiceResponse:
         """
         Xử lý file âm thanh sử dụng AWS Bedrock (Claude 3) để trích xuất dữ liệu
@@ -75,7 +61,7 @@ class VoiceService:
         self, 
         file: UploadFile, 
         cog_sub: str, 
-        extractor: Union[GeminiVoiceExtractor, BedrockVoiceExtractor],
+        extractor: Union[BedrockVoiceExtractor],
         provider_name: str
     ) -> VoiceResponse:
         """
@@ -96,11 +82,9 @@ class VoiceService:
             temp_input_path = Utils.save_temp_file(file, content)
             
             # 3. Transcribe audio (Chuyển Audio -> Text)
-            # Lưu ý: Bước này dùng model local (Whisper) hoặc API chung, độc lập với Gemini/Bedrock
             transcription_text = self.transcribe_audio(temp_input_path)
             
             # 4. Extract schema (Text -> JSON)
-            # Gọi hàm extract_to_schema của extractor được truyền vào (Gemini hoặc Bedrock)
             schema_result = extractor.extract_to_schema(transcription_text)
             print("="*50)
             print(f"🧾 SCHEMA RESULT: {schema_result}")
