@@ -42,10 +42,6 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         mongodb_available = False
         logger.warning(f"⚠️  MongoDB connection failed: {e}")
-        logger.warning("⚠️  API will run WITHOUT MongoDB (transcription-only mode)")
-        logger.info("💡 To enable MongoDB:")
-        logger.info("   - Option 1: Start Docker Desktop + docker compose up -d")
-        logger.info("   - Option 2: Install MongoDB locally + brew services start mongodb-community")
 
     yield
 

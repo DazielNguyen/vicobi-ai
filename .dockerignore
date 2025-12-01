@@ -1,0 +1,45 @@
+# --- Git & Version Control ---
+.git
+.gitignore
+
+# --- Python Bytecode & Cache ---
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+
+# --- Virtual Environments ---
+venv
+.venv
+env
+ENV
+
+# --- Environment Variables / Secrets ---
+.env
+.env.prod
+.env.dev
+.env.local
+
+# --- IDE / Editor Configuration ---
+.vscode
+.idea
+*.swp
+*.swo
+
+# --- Testing & Coverage ---
+.pytest_cache
+.coverage
+htmlcov
+tests/
+
+# --- Distribution / Build artifacts ---
+build
+dist
+*.egg-info
+.mypy_cache
+
+# --- Docker files ---
+Dockerfile
+docker-compose.yml
+docker-compose.*.yml
+.dockerignore

@@ -1,7 +1,8 @@
 FROM python:3.13-slim
 
-RUN yum update -y && \
-    yum install -y ffmpeg
+RUN apt-get update -y && \
+    apt-get install -y ffmpeg && \
+    apt-get clean
 
 WORKDIR /app
 
