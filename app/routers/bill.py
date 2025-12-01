@@ -1,60 +1,61 @@
 from typing import Optional
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
-import torch
-from app.ai_models.bill import is_bill_model_ready
+from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
 from app.auth import verify_jwt
 from app.config import settings
-from app.database import is_mongodb_connected
 from app.schemas.bill import BillResponse
+from app.database import is_mongodb_connected
 from app.services.bill_service import BillService
-from app.services.gemini_extractor.gemini_service import GeminiService, get_gemini_service
 
 router = APIRouter(
     prefix=f"{settings.API_PREFIX}/bills",
-    tags=["bill"],
+    tags=["bill"],    
 )
-
-gemini_service: Optional[GeminiService] = None
 bill_service: Optional[BillService] = None
 
-try:
-    gemini_service = get_gemini_service()
-    if gemini_service:
-        bill_service = BillService(gemini_service.bill_extractor)
-except Exception:
-    pass
-
+def get_bill_service() -> BillService:
+    if bill_service is None:
+        raise HTTPException(status_code=503, detail="Bill Service chưa được khởi tạo")
+    return bill_service
 
 @router.get("/health")
-async def health_check(user=Depends(verify_jwt)):
-    """Kiểm tra trạng thái hoạt động của service"""
-    status = "healthy"
-    if bill_service is None:
-        status = "unhealthy"
-    if gemini_service is None or not gemini_service.is_ready():
-        status = "unhealthy"
-    if not is_bill_model_ready():
-        status = "unhealthy"
-    if not is_mongodb_connected():
-        status = "unhealthy"  
+async def health_check(
+    user=Depends(verify_jwt),
+    service: BillService = Depends(get_bill_service)
+):
+    """Kiểm tra trạng thái Bill Service"""
+    bedrock_ready = service.bedrock_extractor is not None
+    mongo_ready = is_mongodb_connected()
+
     return {
-        "status": status,
-        "gemini_service": gemini_service is not None and gemini_service.is_ready(),
-        "bill_service": bill_service is not None,
-        "is_bill_model": is_bill_model_ready(),
-        "mongodb": is_mongodb_connected()
+        "status": "healthy" if (bedrock_ready) and mongo_ready else "degraded",
+        "providers": {
+            "bedrock": "connected" if bedrock_ready else "not_configured"
+        },
+        "mongodb": "connected" if mongo_ready else "disconnected"
     }
 
+# @router.post("/extract/gemini", response_model=BillResponse)
+# async def process_bill_gemini(
+#     file: UploadFile = File(...), 
+#     user=Depends(verify_jwt),
+#     service: BillService = Depends(get_bill_service)
+# ):
+#     """Xử lý hóa đơn bằng [Google Gemini]"""
+#     cog_sub = user.get("sub")
+#     if not cog_sub:
+#         raise HTTPException(status_code=401, detail="User chưa được xác thực")
+    
+#     return await service.process_via_gemini(file, cog_sub)
+
 @router.post("/extract", response_model=BillResponse)
-async def extract_invoice(file: UploadFile = File(...), user=Depends(verify_jwt)):  
-    """Trích xuất dữ liệu hóa đơn từ file hình ảnh"""
-    if bill_service is None:
-        raise HTTPException(
-            status_code=503,
-            detail="Bill Service chưa được khởi tạo. Kiểm tra lại server logs."
-        )
+async def process_bill_bedrock(
+    file: UploadFile = File(...), 
+    user=Depends(verify_jwt),
+    service: BillService = Depends(get_bill_service)
+):
+    """Xử lý hóa đơn bằng [AWS Bedrock - Claude 3.5]"""
     cog_sub = user.get("sub")
     if not cog_sub:
-        raise HTTPException(status_code=401, detail="User chưa được xác thực")   
+        raise HTTPException(status_code=401, detail="User chưa được xác thực")
     
-    return await bill_service.process_bill_file(file, cog_sub)
+    return await service.process_via_bedrock(file, cog_sub)

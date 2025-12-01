@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -23,14 +23,21 @@ class Settings(BaseSettings):
     GEMINI_TIMEOUT: int = Field(default=30)
     GEMINI_TEMPERATURE: float = Field(default=0.1)
     GEMINI_MAX_RETRIES: int = Field(default=3)
+
+    AWS_REGION: str = Field(default="ap-southeast-1")
+    BEDROCK_MODEL_ID: str = Field(default="anthropic.claude-3-5-sonnet-20240620-v1:0")
+    BEDROCK_TIMEOUT: int = Field(default=60)
+    BEDROCK_TEMPERATURE: float = Field(default=0.0)
+    AWS_ACCESS_KEY_ID: Optional[str] = Field(default=None)
+    AWS_SECRET_ACCESS_KEY: Optional[str] = Field(default=None)
     
     ALLOWED_ORIGINS: str = Field(default="http://localhost:3000,http://127.0.0.1:3000")
 
     USER_POOL_ID: str = Field(default="")
     APP_CLIENT_ID: str = Field(default="")
-    REGION: str = Field(default="") 
+    REGION: str = Field(default="ap-southeast-1") 
 
-    MODEL_BILL_FILE_NAME: str = Field(default="pytorch-bill_classifier_v1.pth")
+    MODEL_BILL_FILE_NAME: str = Field(default="pytorch-bill_classifier.pth")
     
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -51,5 +58,8 @@ class Settings(BaseSettings):
         return [origin.strip() for origin in self.ALLOWED_ORIGINS.split(",")]
 
 
-
-settings = Settings()
+try:
+    settings = Settings()
+except Exception as e:
+    print("❌ LỖI CONFIG: Thiếu biến môi trường bắt buộc!")
+    raise e

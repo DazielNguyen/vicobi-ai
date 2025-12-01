@@ -3,6 +3,9 @@ from datetime import datetime, timezone
 import os
 import tempfile
 from fastapi import UploadFile
+from pathlib import Path
+from typing import Union
+from pydub import AudioSegment
 
 
 class Utils:
@@ -46,3 +49,49 @@ class Utils:
         name, ext = os.path.splitext(original_filename)
         unique_filename = f"{prefix}_{name}_{timestamp}{ext}"
         return unique_filename
+    
+    @staticmethod
+    def convert_audio_to_wav(
+        input_file: Union[str, Path],
+        output_file: Union[str, Path, None] = None,
+        sample_rate: int = 16000,
+        channels: int = 1
+    ) -> str:
+        """
+        Chuyển đổi file âm thanh bất kỳ (mp3, aac, m4a, ogg, flac, mp2, v.v.) sang định dạng .wav
+        
+        Args:
+            input_file: Đường dẫn đến file âm thanh đầu vào
+            output_file: Đường dẫn đến file .wav đầu ra (nếu None, sẽ tạo file tạm)
+            sample_rate: Tần số lấy mẫu (Hz), mặc định 16000 cho speech recognition
+            channels: Số kênh âm thanh (1=mono, 2=stereo), mặc định 1
+        
+        Returns:
+            str: Đường dẫn đến file .wav đã chuyển đổi
+        """
+        input_path = Path(input_file)
+        
+        if not input_path.exists():
+            raise FileNotFoundError(f"File không tồn tại: {input_file}")
+        
+        if output_file is None:
+            temp_dir = tempfile.gettempdir()
+            output_file = os.path.join(temp_dir, f"{input_path.stem}_converted.wav")
+        
+        output_path = Path(output_file)
+        
+        try:
+            audio = AudioSegment.from_file(str(input_path))
+            audio = audio.set_frame_rate(sample_rate)
+            audio = audio.set_channels(channels)
+            
+            audio.export(
+                str(output_path),
+                format="wav",
+                parameters=["-ac", str(channels), "-ar", str(sample_rate)]
+            )
+            
+            return str(output_path)
+            
+        except Exception as e:
+            raise Exception(f"Lỗi khi chuyển đổi file âm thanh: {str(e)}")
