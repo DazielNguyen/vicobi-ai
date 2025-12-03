@@ -4,12 +4,12 @@ services:
   - docker:dind
 
 variables:
+  # --- CẤU HÌNH CHUNG ---
   AWS_REGION: "ap-southeast-1"
   ECS_CLUSTER: "Dev-Cluster"
-  
   SERVICE_NAME: "ai-service"
-  
   ECR_REPOSITORY: "vicobi/ai"
+  TASK_DEF_FAMILY: "vicobi-ai"
   
   DOCKER_DRIVER: overlay2
   DOCKER_TLS_CERTDIR: ""
@@ -19,7 +19,7 @@ stages:
 
 deploy_ai:
   stage: deploy
-  timeout: 30m 
+  timeout: 30m
   
   before_script:
     - apk add --no-cache aws-cli jq
@@ -29,12 +29,12 @@ deploy_ai:
     - |
       echo "🚀 Starting deploy for AI Service..."
       
-      # --- 1. BUILD DOCKER IMAGE ---
+      # --- 1. BUILD IMAGE ---
       export IMAGE_TAG=$CI_COMMIT_SHORT_SHA
       export FULL_IMAGE_NAME=$ECR_REGISTRY_URI/$ECR_REPOSITORY:$IMAGE_TAG
       export LATEST_IMAGE_NAME=$ECR_REGISTRY_URI/$ECR_REPOSITORY:latest
       
-      # Pull image cũ về để tận dụng cache layer
+      # Pull image cũ về để tận dụng cache
       docker pull $LATEST_IMAGE_NAME || true
       
       echo "Building Image..."
@@ -48,25 +48,23 @@ deploy_ai:
       docker push $FULL_IMAGE_NAME
       docker push $LATEST_IMAGE_NAME
       
-      # --- 3. UPDATE ECS SERVICE ---
-      echo "Updating ECS Service '$SERVICE_NAME'..."
+      # --- 3. UPDATE ECS ---
+      echo "Updating ECS Service '$SERVICE_NAME' using Task Family '$TASK_DEF_FAMILY'..."
       
-      # Lấy Task Family hiện tại
-      TASK_FAMILY=$(aws ecs describe-services --cluster $ECS_CLUSTER --services $SERVICE_NAME --query "services[0].taskDefinition" --output text | awk -F/ '{print $2}' | awk -F: '{print $1}')
+      # Lấy Task Def trực tiếp từ Family
+      aws ecs describe-task-definition --task-definition $TASK_DEF_FAMILY --query taskDefinition > task-definition.json
       
-      # Lấy nội dung Task Definition cũ
-      aws ecs describe-task-definition --task-definition $TASK_FAMILY --query taskDefinition > task-definition.json
-      
-      # Thay thế Image mới vào JSON
+      # Thay thế Image mới
       jq --arg image "$FULL_IMAGE_NAME" '.containerDefinitions[0].image = $image' task-definition.json > new-task-definition.json
       
-      # Xóa các trường readonly
+      # Xóa trường readonly
       cat new-task-definition.json | jq 'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)' > final-task-definition.json
       
-      # Đăng ký Task Def mới
+      # Register bản mới
       NEW_TASK_DEF_ARN=$(aws ecs register-task-definition --cli-input-json file://final-task-definition.json --query 'taskDefinition.taskDefinitionArn' --output text)
+      echo "Registered: $NEW_TASK_DEF_ARN"
       
-      # Force Deploy
+      # Update Service
       aws ecs update-service --cluster $ECS_CLUSTER --service $SERVICE_NAME --task-definition $NEW_TASK_DEF_ARN --force-new-deployment
       
       echo "✅ AI Service Deployed Successfully!"
