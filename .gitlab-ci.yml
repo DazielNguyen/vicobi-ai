@@ -4,13 +4,11 @@ services:
   - docker:dind
 
 variables:
-  # --- CẤU HÌNH CHUNG ---
   AWS_REGION: "ap-southeast-1"
   ECS_CLUSTER: "Dev-Cluster"
   SERVICE_NAME: "ai-service"
   ECR_REPOSITORY: "vicobi/ai"
   TASK_DEF_FAMILY: "vicobi-ai"
-  
   DOCKER_DRIVER: overlay2
   DOCKER_TLS_CERTDIR: ""
 
@@ -20,54 +18,23 @@ stages:
 deploy_ai:
   stage: deploy
   timeout: 30m
-  
   before_script:
     - apk add --no-cache aws-cli jq
     - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REGISTRY_URI
-  
   script:
     - |
-      echo "🚀 Starting deploy for AI Service..."
+      export FULL_IMAGE_NAME=$ECR_REGISTRY_URI/$ECR_REPOSITORY:latest
       
-      # --- 1. BUILD IMAGE ---
-      export IMAGE_TAG=$CI_COMMIT_SHORT_SHA
-      export FULL_IMAGE_NAME=$ECR_REGISTRY_URI/$ECR_REPOSITORY:$IMAGE_TAG
-      export LATEST_IMAGE_NAME=$ECR_REGISTRY_URI/$ECR_REPOSITORY:latest
-      
-      # Pull image cũ về để tận dụng cache
-      docker pull $LATEST_IMAGE_NAME || true
-      
-      echo "Building Image..."
-      docker build \
-        --cache-from $LATEST_IMAGE_NAME \
-        -t $FULL_IMAGE_NAME \
-        -t $LATEST_IMAGE_NAME .
-      
-      # --- 2. PUSH IMAGE ---
-      echo "Pushing Image to ECR..."
+      docker pull $FULL_IMAGE_NAME || true
+      docker build --cache-from $FULL_IMAGE_NAME -t $FULL_IMAGE_NAME .
       docker push $FULL_IMAGE_NAME
-      docker push $LATEST_IMAGE_NAME
       
-      # --- 3. UPDATE ECS ---
-      echo "Updating ECS Service '$SERVICE_NAME' using Task Family '$TASK_DEF_FAMILY'..."
-      
-      # Lấy Task Def trực tiếp từ Family
       aws ecs describe-task-definition --task-definition $TASK_DEF_FAMILY --query taskDefinition > task-definition.json
-      
-      # Thay thế Image mới
       jq --arg image "$FULL_IMAGE_NAME" '.containerDefinitions[0].image = $image' task-definition.json > new-task-definition.json
-      
-      # Xóa trường readonly
       cat new-task-definition.json | jq 'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)' > final-task-definition.json
       
-      # Register bản mới
       NEW_TASK_DEF_ARN=$(aws ecs register-task-definition --cli-input-json file://final-task-definition.json --query 'taskDefinition.taskDefinitionArn' --output text)
-      echo "Registered: $NEW_TASK_DEF_ARN"
-      
-      # Update Service
       aws ecs update-service --cluster $ECS_CLUSTER --service $SERVICE_NAME --task-definition $NEW_TASK_DEF_ARN --force-new-deployment
-      
-      echo "✅ AI Service Deployed Successfully!"
 
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
