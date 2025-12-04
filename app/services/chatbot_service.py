@@ -59,13 +59,11 @@ class ChatbotService:
         try:
             return file_content.decode('utf-8')
         except UnicodeDecodeError:
-            # Thử với encoding khác nếu utf-8 thất bại
             return file_content.decode('latin-1')
     
     async def ingest_from_file(self, file_content: bytes, filename: str) -> Dict[str, Any]:
         """Ingest data from TXT or PDF file into Qdrant vector store"""
         try:
-            # Trích xuất text từ file
             if filename.endswith('.pdf'):
                 text_content = self._extract_text_from_pdf(file_content)
             elif filename.endswith('.txt'):
@@ -80,7 +78,6 @@ class ChatbotService:
             # Ở đây ta có thể chia theo đoạn văn hoặc theo số ký tự
             chunks = self._split_text_into_chunks(text_content)
             
-            # Tạo metadata cho mỗi chunk
             timestamp = datetime.now().isoformat()
             metadatas = [
                 {
@@ -118,7 +115,6 @@ class ChatbotService:
             end = start + chunk_size
             chunk = text[start:end]
             
-            # Tìm dấu kết thúc câu gần nhất
             if end < len(text):
                 last_period = chunk.rfind('.')
                 last_newline = chunk.rfind('\n')
@@ -171,22 +167,19 @@ class ChatbotService:
         try:
             client = QdrantClient(url=self.qdrant_url, prefer_grpc=False)
             
-            # Scroll through all points to get unique filenames
             scroll_result = client.scroll(
                 collection_name=self.collection_name,
-                limit=10000,  # Tăng limit để lấy nhiều points hơn
+                limit=10000, 
                 with_payload=True,
                 with_vectors=False
             )
             
             points = scroll_result[0]
             
-            # Group by filename and get stats
             files_dict = {}
             for point in points:
                 payload = point.payload or {}
                 
-                # Kiểm tra cả 'filename' và 'metadata.filename'
                 filename = payload.get('filename') or payload.get('metadata', {}).get('filename')
                 
                 if filename:
@@ -239,7 +232,6 @@ class ChatbotService:
         try:
             client = QdrantClient(url=self.qdrant_url, prefer_grpc=False)
             
-            # Lấy tất cả points và filter bằng Python vì cấu trúc payload phức tạp
             scroll_result = client.scroll(
                 collection_name=self.collection_name,
                 limit=10000,
@@ -249,11 +241,9 @@ class ChatbotService:
             
             points = scroll_result[0]
             
-            # Filter points có filename khớp
             matching_point_ids = []
             for point in points:
                 payload = point.payload or {}
-                # Kiểm tra cả 'filename' trực tiếp và 'metadata.filename'
                 point_filename = payload.get('filename') or payload.get('metadata', {}).get('filename')
                 
                 if point_filename == filename:
@@ -265,7 +255,6 @@ class ChatbotService:
                     "message": f"Không tìm thấy file '{filename}' trong hệ thống"
                 }
             
-            # Xóa tất cả points tìm được
             client.delete(
                 collection_name=self.collection_name,
                 points_selector=models.PointIdsList(

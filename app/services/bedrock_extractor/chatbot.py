@@ -45,7 +45,7 @@ Nếu thông tin không có trong context, hãy nói là không biết."""
             "anthropic_version": "bedrock-2023-05-31",
             "max_tokens": 2048,
             "temperature": self.config.get('aws.generation.temperature', 0.3),
-            "system": system_prompt,  # Sử dụng system parameter riêng
+            "system": system_prompt,
             "messages": [
                 {
                     "role": "user",
