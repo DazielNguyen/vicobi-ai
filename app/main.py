@@ -57,6 +57,15 @@ async def main_lifespan(app: FastAPI):
             if not is_bill_model_ready():
                 raise RuntimeError("Failed to load Bill classifier model")
             logger.info("Bill classifier and EasyOCR ready")
+            
+            # Auto-initialize context files từ folder context
+            logger.info("Initializing context files...")
+            from app.services.context_initializer import auto_initialize_context
+            context_result = await auto_initialize_context(chatbot_business_service)
+            if context_result.get("files_processed", 0) > 0:
+                logger.success(f"Context initialized: {context_result['files_processed']} file(s) embedded")
+            elif context_result.get("files_skipped", 0) > 0:
+                logger.info(f"Context files already initialized: {context_result['files_skipped']} file(s) skipped")
                         
             ai_services_ready = True
             logger.success("STARTUP: All AI Services and Models are ready")
