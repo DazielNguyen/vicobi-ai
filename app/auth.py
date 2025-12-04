@@ -53,3 +53,13 @@ async def verify_admin(user = Depends(verify_jwt)):
         )
     return user
 
+async def verify_member_or_admin(user = Depends(verify_jwt)):
+    """Kiểm tra user có role member hoặc admin"""
+    role = user.get("custom:role")
+    if role not in ["member", "admin"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Bạn không có quyền truy cập chức năng này"
+        )
+    return user
+
