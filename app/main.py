@@ -3,7 +3,6 @@ from fastapi.responses import RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 from loguru import logger
 from contextlib import asynccontextmanager
-
 from app.config import settings
 from app.database import lifespan as db_lifespan
 from app.routers import voice, bill, chatbot

@@ -1,10 +1,9 @@
-from typing import List, Optional
+from typing import Optional
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
 from app.auth import verify_jwt
 from app.config import settings
 from app.schemas.voice import VoiceResponse
 from app.database import is_mongodb_connected
-from app.models.voice import Voice
 from app.services.voice_service import VoiceService
 
 router = APIRouter(

@@ -3,7 +3,6 @@ Context Initializer Service
 
 Tự động ingest các file context từ folder context vào Qdrant khi khởi động app lần đầu.
 """
-import os
 from pathlib import Path
 from typing import Dict, Any, List
 from loguru import logger

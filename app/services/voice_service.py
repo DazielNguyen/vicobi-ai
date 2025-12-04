@@ -3,7 +3,6 @@ from datetime import datetime, timezone
 from typing import Dict, Any, Union, Optional
 from fastapi import UploadFile, HTTPException
 from loguru import logger
-
 from app.services.utils import Utils
 from app.ai_models.voice import transcribe_audio_file
 from app.models.voice import Voice, VoiceTransactionDetail, VoiceTransactions, VoiceTotalAmount
