@@ -21,9 +21,7 @@ async def main_lifespan(app: FastAPI):
     """Application lifespan: Initialize database and load AI models"""
     global ai_services_ready, bedrock_service
 
-    async with db_lifespan(app):
-        logger.info("STARTUP: Initializing AI Services (Model Download and Load)...")
-        
+    async with db_lifespan(app):        
         try:
             bedrock_service = get_bedrock_service()
 
@@ -42,30 +40,24 @@ async def main_lifespan(app: FastAPI):
             bill.bill_service = bill_business_service
             voice.voice_service = voice_business_service 
             chatbot.chatbot_service = chatbot_business_service
-            
-            logger.info("Loading all HuggingFace models...")
-            
+                        
             logger.info("Loading PhoWhisper model...")
             get_transcriber()
             from app.ai_models.voice import is_transcriber_ready
             if not is_transcriber_ready():
                 raise RuntimeError("Failed to load PhoWhisper model")
-            logger.info("PhoWhisper model ready")
             
             logger.info("Loading Embedding model for chatbot...")
             from app.ai_models.embeddings import get_embedding_model, is_embedding_model_ready
             get_embedding_model()
             if not is_embedding_model_ready():
                 raise RuntimeError("Failed to load Embedding model")
-            logger.info("Embedding model ready")
             
             from app.ai_models.bill import is_bill_model_ready
             if not is_bill_model_ready():
                 raise RuntimeError("Failed to load Bill classifier model")
             logger.info("Bill classifier and EasyOCR ready")
-            
-            logger.success("All HuggingFace models loaded successfully")
-            
+                        
             ai_services_ready = True
             logger.success("STARTUP: All AI Services and Models are ready")
 

@@ -77,8 +77,6 @@ class VoiceService:
             transcription_text = self.transcribe_audio(temp_input_path)
             
             schema_result = extractor.extract_to_schema(transcription_text)
-            print("Schema extraction result:")
-            print(f"Result: {schema_result}")
             
             voice_id = Utils.generate_unique_filename("voice", file.filename).replace(" ", "_")
             voice_id = f"{voice_id}_{provider_name}" 

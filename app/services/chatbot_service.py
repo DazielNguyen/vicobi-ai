@@ -2,6 +2,7 @@ from typing import List, Dict, Any, Optional
 from langchain_qdrant import QdrantVectorStore
 from qdrant_client import QdrantClient
 from qdrant_client.http import models
+from loguru import logger
 from app.services.bedrock_extractor.chatbot import BedrockChatExtractor
 from app.ai_models.embeddings import get_embedding_model, get_embedding_dimension
 from app.config import settings
@@ -25,7 +26,7 @@ class ChatbotService:
         client = QdrantClient(url=self.qdrant_url, prefer_grpc=False)
         
         if not client.collection_exists(self.collection_name):
-            print(f"Creating Qdrant collection: {self.collection_name}")
+            logger.info(f"Creating Qdrant collection: {self.collection_name}")
             client.create_collection(
                 collection_name=self.collection_name,
                 vectors_config=models.VectorParams(
@@ -93,9 +94,7 @@ class ChatbotService:
             ]
             
             # Thêm vào vector store với metadata
-            print(f"Adding {len(chunks)} chunks with metadata for file: {filename}")
             ids = self.vector_store.add_texts(texts=chunks, metadatas=metadatas)
-            print(f"Successfully added {len(ids)} chunks to Qdrant")
             
             return {
                 "status": "success",
@@ -181,11 +180,6 @@ class ChatbotService:
             )
             
             points = scroll_result[0]
-            
-            # Debug: In ra payload của một số points
-            if points:
-                print(f"Total points found: {len(points)}")
-                print(f"Sample point payload: {points[0].payload if points else 'No points'}")
             
             # Group by filename and get stats
             files_dict = {}

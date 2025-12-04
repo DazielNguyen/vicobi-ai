@@ -2,6 +2,7 @@ from transformers import pipeline
 import torch
 from typing import Optional
 import threading
+from loguru import logger
 
 _model_lock = threading.Lock()
 _transcriber = None
@@ -15,9 +16,7 @@ def get_transcriber(model_name: str = "vinai/PhoWhisper-small", device: Optional
             if _transcriber is None:
                 if device is None:
                     device = "cuda" if torch.cuda.is_available() else "cpu"
-                
-                print(f"Loading model {model_name} on device: {device}")
-                
+                                
                 model_kwargs = {
                     "low_cpu_mem_usage": True
                 }
@@ -34,10 +33,9 @@ def get_transcriber(model_name: str = "vinai/PhoWhisper-small", device: Optional
                         device=device,
                         model_kwargs=model_kwargs 
                     )
-                    print("Model loaded successfully")
 
                 except Exception as e:
-                    print(f"Error loading model: {str(e)}")
+                    logger.error(f"Error loading model: {str(e)}")
                     raise e
     
     return _transcriber
@@ -69,5 +67,5 @@ def transcribe_audio_file(wav_file_path: str, model_name: str = "vinai/PhoWhispe
         }
         
     except Exception as e:
-        print(f"CRITICAL ERROR in transcribe: {str(e)}")
+        logger.error(f"CRITICAL ERROR in transcribe: {str(e)}")
         raise Exception(f"Lỗi khi transcribe audio: {str(e)}")

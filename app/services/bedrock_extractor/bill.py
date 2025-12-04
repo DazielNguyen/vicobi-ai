@@ -5,6 +5,7 @@ import boto3
 from pathlib import Path
 from typing import Dict, Any
 from botocore.exceptions import ClientError
+from loguru import logger
 from .config import Config
 from ...schemas.base import BillTotalAmountSchema, BillTransactionsSchema, BillTransactionDetailSchema
 
@@ -19,7 +20,6 @@ class BedrockBillExtractor:
     def _load_prompt_template(self) -> str:
         """Tải mẫu prompt từ extraction_bill_vi.txt"""
         prompt_path = Path(__file__).parent.parent.parent / "prompts" / "extraction_bill_en.txt"
-        print(f"Loading prompt template from: {prompt_path}")
         try:
             if prompt_path.exists():
                 with open(prompt_path, 'r', encoding='utf-8') as f:

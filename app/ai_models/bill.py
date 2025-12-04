@@ -6,6 +6,7 @@ import torch.nn as nn
 from torchvision import models
 from PIL import Image
 import torchvision.transforms as T
+from loguru import logger
 from app.config import settings
 import io
 
@@ -17,7 +18,6 @@ MODEL_BILL_FILE_NAME = settings.MODEL_BILL_FILE_NAME
 MODEL_PATH = SAVE_DIR / MODEL_BILL_FILE_NAME
 
 if 'v1' in MODEL_BILL_FILE_NAME.lower():
-    print("Loading MobileNetV2 architecture for v1...")
     base_model = models.mobilenet_v2(weights=None)
     for param in base_model.parameters():
         param.requires_grad = False
@@ -32,7 +32,6 @@ if 'v1' in MODEL_BILL_FILE_NAME.lower():
     base_model.classifier = classifier_head
     
 else:
-    print("Loading EfficientNet-B0 architecture for v2...")
     base_model = models.efficientnet_b0(weights=None)
     
     num_ftrs = base_model.classifier[1].in_features
@@ -41,7 +40,7 @@ else:
         nn.Dropout(p=0.3, inplace=True),
         nn.Linear(num_ftrs, 128),
         nn.ReLU(),
-        nn.Dropout(p=0.3),
+        nn.Dropout(p=0.3), 
         nn.Linear(128, 1)
     )
 
@@ -51,9 +50,8 @@ try:
     checkpoint = torch.load(MODEL_PATH, map_location=device)
     loaded_model.load_state_dict(checkpoint['model_state_dict'])
     loaded_model.eval()
-    print(f"Bill classifier model loaded successfully from {MODEL_PATH}")
 except Exception as e:
-    print(f"Error loading bill classifier model: {e}")
+    logger.error(f"Error loading bill classifier model: {e}")
 
 THRESHOLD = 0.85
 transform_inference = T.Compose([
@@ -61,9 +59,7 @@ transform_inference = T.Compose([
     T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 ])
 
-print("Loading EasyOCR reader for languages: en, vi")
 ocr_reader = easyocr.Reader(['en', 'vi'])
-print("EasyOCR reader loaded successfully")
 
 def is_bill_model_ready() -> bool:
     """Kiểm tra xem model có load thành công và inference được không"""

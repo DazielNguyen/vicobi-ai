@@ -1,6 +1,7 @@
 from typing import List, Optional
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from loguru import logger
 
 class Settings(BaseSettings):
     PROJECT_NAME: str = Field(default="VicobiAI")
@@ -55,5 +56,5 @@ class Settings(BaseSettings):
 try:
     settings = Settings()
 except Exception as e:
-    print("CONFIG ERROR: Missing required environment variables!")
+    logger.error("CONFIG ERROR: Missing required environment variables!")
     raise e
