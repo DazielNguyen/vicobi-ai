@@ -501,6 +501,45 @@ curl -X POST "http://localhost:8000/api/v1/ai/bills/extract" \
   -F "file=@bill.jpg"
 ```
 
+**Kiểm tra Health Chatbot Service:**
+
+```bash
+curl -X GET "http://localhost:8000/api/v1/ai/chatbot/health" \
+  -H "Authorization: Bearer YOUR_ADMIN_JWT_TOKEN"
+```
+
+**Hỏi đáp với Chatbot:**
+
+```bash
+curl -X POST "http://localhost:8000/api/v1/ai/chatbot/ask" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"question": "Phí chuyển khoản là bao nhiêu?"}'
+```
+
+**Upload file context:**
+
+```bash
+curl -X POST "http://localhost:8000/api/v1/ai/chatbot/ingest" \
+  -H "Authorization: Bearer YOUR_ADMIN_JWT_TOKEN" \
+  -H "Content-Type: multipart/form-data" \
+  -F "file=@knowledge.pdf"
+```
+
+**Lấy danh sách files:**
+
+```bash
+curl -X GET "http://localhost:8000/api/v1/ai/chatbot/files" \
+  -H "Authorization: Bearer YOUR_ADMIN_JWT_TOKEN"
+```
+
+**Xóa một file:**
+
+```bash
+curl -X DELETE "http://localhost:8000/api/v1/ai/chatbot/files/knowledge.pdf" \
+  -H "Authorization: Bearer YOUR_ADMIN_JWT_TOKEN"
+```
+
 ---
 
 ## 🔧 Khắc phục Sự cố (Troubleshooting)
@@ -553,6 +592,26 @@ docker inspect vicobi-ai-service
 - Test: `aws bedrock list-foundation-models --region ap-southeast-1`
 - Đảm bảo model ID có sẵn trong region
 
+### Lỗi: Qdrant connection failed
+
+```bash
+# Kiểm tra Qdrant đang chạy
+docker ps | grep qdrant
+
+# Xem logs
+docker logs vicobi-qdrant
+
+# Test kết nối
+curl http://localhost:6333/collections
+```
+
+### Lỗi: Context files không được auto-embedded
+
+- Kiểm tra file có đúng định dạng (.pdf hoặc .txt)
+- Xem logs khi startup: `docker compose logs ai-service | grep "Context"`
+- File phải nằm trong folder `app/ai_models/context/`
+- Restart app để trigger auto-initialization
+
 ---
 
 ## 📚 Tài liệu API (API Documentation)
@@ -585,7 +644,22 @@ Sau khi khởi động server, truy cập Swagger UI để xem đầy đủ tài
 | GET    | `/api/v1/ai/bills/health`  | Kiểm tra health Bill Service                  | Có       |
 | POST   | `/api/v1/ai/bills/extract` | Trích xuất thông tin từ ảnh hóa đơn (Bedrock) | Có       |
 
-> **Lưu ý**: Tất cả các endpoint có đánh dấu "Có" ở cột Xác thực yêu cầu JWT token từ AWS Cognito trong header `Authorization: Bearer <token>`
+#### Chatbot RAG
+
+| Method | Endpoint                          | Mô tả                                          | Xác thực      |
+| ------ | --------------------------------- | ---------------------------------------------- | ------------- |
+| GET    | `/api/v1/ai/chatbot/health`       | Kiểm tra health Chatbot Service                | Admin         |
+| POST   | `/api/v1/ai/chatbot/ask`          | Hỏi đáp với chatbot (member & admin)           | Member, Admin |
+| GET    | `/api/v1/ai/chatbot/files`        | Lấy danh sách files đã được ingest             | Admin         |
+| POST   | `/api/v1/ai/chatbot/ingest`       | Upload và ingest file PDF/TXT vào vector store | Admin         |
+| DELETE | `/api/v1/ai/chatbot/files/{name}` | Xóa một file cụ thể khỏi vector store          | Admin         |
+| DELETE | `/api/v1/ai/chatbot/reset`        | Xóa toàn bộ dữ liệu trong collection           | Admin         |
+
+> **Lưu ý**:
+>
+> - Tất cả các endpoint yêu cầu JWT token từ AWS Cognito trong header `Authorization: Bearer <token>`
+> - **Member**: User với role `member` hoặc `admin`
+> - **Admin**: Chỉ user với role `admin`
 
 ---
 
