@@ -22,10 +22,7 @@ class VoiceTotalAmount(EmbeddedDocument):
 
 
 class Voice(Document):
-    """
-    MongoDB document cho Voice data
-    Lưu trữ dữ liệu đã xử lý từ transcription
-    """
+    """MongoDB document for Voice data with processed transcription"""
     voice_id = fields.StringField(required=True, unique=True, max_length=100)
     cog_sub = fields.StringField(required=True, max_length=100)
     total_amount = fields.EmbeddedDocumentField(VoiceTotalAmount, required=True)
@@ -52,7 +49,7 @@ class Voice(Document):
     }
     
     def save(self, *args, **kwargs):
-        """Override save để tự động update updated_at"""
+        """Override save to automatically update updated_at timestamp"""
         self.updated_at = datetime.now(timezone.utc)
         return super(Voice, self).save(*args, **kwargs)
     

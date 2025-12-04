@@ -28,10 +28,7 @@ class Config:
         config[keys[-1]] = value
 
 def load_config() -> Config:
-    """
-    Load cấu hình trực tiếp từ Pydantic Settings global.
-    Không đọc file yaml hay .env thủ công nữa.
-    """
+    """Load configuration from Pydantic Settings"""
     config_dict = {
         "aws": {
             "region": settings.AWS_REGION,

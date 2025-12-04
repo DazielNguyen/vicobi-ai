@@ -31,7 +31,10 @@ class Settings(BaseSettings):
     APP_CLIENT_ID: str = Field(default="")
     REGION: str = Field(default="ap-southeast-1") 
 
-    MODEL_BILL_FILE_NAME: str = Field(default="pytorch-bill_classifier.pth")
+    MODEL_BILL_FILE_NAME: str = Field(default="pytorch-bill_classifier_v1.pth")
+    
+    QDRANT_URL: str = Field(default="http://localhost:6333")
+    QDRANT_COLLECTION_NAME: str = Field(default="vicobi_collection")
     
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -42,10 +45,7 @@ class Settings(BaseSettings):
     
     @property
     def mongo_uri(self) -> str:
-        return (
-            f"mongodb://{self.MONGO_INITDB_ROOT_USERNAME}:{self.MONGO_INITDB_ROOT_PASSWORD}"
-            f"@{self.MONGO_HOST}:{self.MONGO_PORT}/{self.MONGO_INITDB_DATABASE}?authSource=admin"
-        )
+        return f"mongodb://{self.MONGO_INITDB_ROOT_USERNAME}:{self.MONGO_INITDB_ROOT_PASSWORD}@{self.MONGO_HOST}:{self.MONGO_PORT}/{self.MONGO_INITDB_DATABASE}?authSource=admin"
     
     @property
     def allowed_origins_list(self) -> List[str]:
@@ -55,5 +55,5 @@ class Settings(BaseSettings):
 try:
     settings = Settings()
 except Exception as e:
-    print("❌ LỖI CONFIG: Thiếu biến môi trường bắt buộc!")
+    print("CONFIG ERROR: Missing required environment variables!")
     raise e

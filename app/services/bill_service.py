@@ -12,7 +12,7 @@ from app.services.bedrock_extractor.bill import BedrockBillExtractor
 
 
 class BillService:
-    """Service xử lý Bill processing sử dụng AWS Bedrock AI"""
+    """Bill processing service using AWS Bedrock AI"""
     
     def __init__(
         self, 
@@ -21,7 +21,7 @@ class BillService:
         self.bedrock_extractor = bedrock_extractor
 
     async def process_via_bedrock(self, file: UploadFile, cog_sub: str) -> BillResponse:
-        """Xử lý hóa đơn sử dụng AWS Bedrock"""
+        """Process bill using AWS Bedrock Claude 3"""
         if not self.bedrock_extractor:
             raise HTTPException(status_code=503, detail="Bedrock Bill Service chưa được cấu hình")
         
@@ -34,50 +34,38 @@ class BillService:
         extractor: Union[BedrockBillExtractor],
         provider_name: str
     ) -> BillResponse:
-        """
-        Luồng xử lý chung: Validate -> Check is_bill -> OCR -> Extract (AI) -> Save DB
-        """
+        """Common processing pipeline: Validate -> Check is_bill -> OCR -> Extract -> Save DB"""
         temp_input_path = None
         
         try:
-            # 1. Validate Image File
             if not Utils.is_valid_image_file(file.filename):
                 raise HTTPException(
                     status_code=400,
                     detail="Định dạng file không hợp lệ. Hỗ trợ: jpg, jpeg, png, bmp, tiff, gif."
                 )
 
-            # 2. Read Content & Check if it is a Bill
             content = await file.read()
             
-            # Kiểm tra phân loại ảnh (tránh tốn tiền OCR cho ảnh rác)
             if not is_bill(content):
                 raise HTTPException(
                     status_code=400,
                     detail="Hệ thống nhận diện đây không phải là hình ảnh hóa đơn hợp lệ."
                 )
 
-            # 3. Save Temp File (OCR model cần đường dẫn file)
             temp_input_path = Utils.save_temp_file(file, content)
 
-            # 4. Perform OCR (Image -> Text/List)
-            # Hàm này trả về string hoặc list dict OCR result
             ocr_result = extract_bill_using_ocr_model(temp_input_path)
 
-            # 5. Extract Data to Schema (OCR Result -> JSON Schema)
             schema_result = extractor.extract_to_schema(ocr_result)
 
-            # 6. Generate Metadata
             bill_id = Utils.generate_unique_filename("bill", file.filename).replace(" ", "_")
-            bill_id = f"{bill_id}_{provider_name}" # Thêm suffix để track provider
+            bill_id = f"{bill_id}_{provider_name}"
             utc_time = datetime.now(timezone.utc)
 
-            # 7. Save to Database
-            # Lưu cả raw OCR result nếu cần (ở đây mình giả sử lưu text đại diện)
             raw_text_for_db = str(ocr_result) if isinstance(ocr_result, list) else ocr_result
             self.save_to_database(bill_id, cog_sub, schema_result, raw_text_for_db, utc_time)
 
-            # 8. Return Response
+            
             return self.create_response(bill_id, schema_result, utc_time)
 
         except HTTPException:
@@ -88,7 +76,6 @@ class BillService:
             logger.error(f"Error in {provider_name} bill pipeline: {e}")
             raise HTTPException(status_code=500, detail=f"Lỗi xử lý hóa đơn: {str(e)}")
         finally:
-            # Cleanup temp file
             if temp_input_path and os.path.exists(temp_input_path):
                 try:
                     os.remove(temp_input_path)
@@ -100,7 +87,7 @@ class BillService:
         bill_id: str,
         cog_sub: str,
         schema_result: Dict[str, Any],
-        raw_text: str, # Thay tên biến cho rõ nghĩa
+        raw_text_for_db: str,
         utc_time: datetime
     ) -> bool:
         """Lưu dữ liệu hóa đơn vào cơ sở dữ liệu"""
@@ -132,18 +119,17 @@ class BillService:
                 total_amount=total_amount_doc,
                 transactions=transactions_doc,
                 utc_time=utc_time,
-                money_type=schema_result.get("money_type", "VND"), # Đảm bảo có field này
+                money_type=schema_result.get("money_type", "VND"),
                 processing_time=schema_result.get("processing_time"),
                 tokens_used=schema_result.get("tokens_used")
-                # Nếu model Bill có field raw_text thì lưu raw_text vào đây
             )
 
             bill_doc.save()
-            logger.success(f"✅ Bill {bill_id} saved successfully")
+            logger.success(f"Bill {bill_id} saved successfully")
             return True
 
         except Exception as e:
-            logger.error(f"❌ Error saving bill {bill_id}: {str(e)}")
+            logger.error(f"Error saving bill {bill_id}: {str(e)}")
             return False
 
     def create_response(

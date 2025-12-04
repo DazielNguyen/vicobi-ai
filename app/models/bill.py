@@ -17,10 +17,7 @@ class BillTotalAmount(EmbeddedDocument):
     expenses = fields.FloatField(default=0.0, min_value=0)
 
 class Bill(Document):
-    """
-    MongoDB document cho Bill data
-    Lưu trữ dữ liệu đã xử lý từ transcription
-    """
+    """MongoDB document for Bill data with processed OCR results"""
     bill_id = fields.StringField(required=True, unique=True, max_length=100)
     cog_sub = fields.StringField(required=True, max_length=100)
     total_amount = fields.EmbeddedDocumentField(BillTotalAmount, required=True)
@@ -48,14 +45,14 @@ class Bill(Document):
     }
 
     def save(self, *args, **kwargs):
-        """Override save để tự động update updated_at"""
+        """Override save to automatically update updated_at timestamp"""
         self.updated_at = datetime.now(timezone.utc)
         return super(Bill, self).save(*args, **kwargs)
     
     def to_dict(self):
-        """Chuyển document thành dict để dễ sử dụng"""
+        """Convert document to dictionary for API response"""
         return {
-            "voice_id": self.voice_id,
+            "bill_id": self.bill_id,
             "cog_sub": self.cog_sub,
             "total_amount": {
                 "expenses": self.total_amount.expenses

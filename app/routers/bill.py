@@ -34,26 +34,13 @@ async def health_check(
         "mongodb": "connected" if mongo_ready else "disconnected"
     }
 
-# @router.post("/extract/gemini", response_model=BillResponse)
-# async def process_bill_gemini(
-#     file: UploadFile = File(...), 
-#     user=Depends(verify_jwt),
-#     service: BillService = Depends(get_bill_service)
-# ):
-#     """Xử lý hóa đơn bằng [Google Gemini]"""
-#     cog_sub = user.get("sub")
-#     if not cog_sub:
-#         raise HTTPException(status_code=401, detail="User chưa được xác thực")
-    
-#     return await service.process_via_gemini(file, cog_sub)
-
 @router.post("/extract", response_model=BillResponse)
-async def process_bill_bedrock(
+async def extract_bill(
     file: UploadFile = File(...), 
     user=Depends(verify_jwt),
     service: BillService = Depends(get_bill_service)
 ):
-    """Xử lý hóa đơn bằng [AWS Bedrock - Claude 3.5]"""
+    """Extract bill data from image using AWS Bedrock Claude 3.5"""
     cog_sub = user.get("sub")
     if not cog_sub:
         raise HTTPException(status_code=401, detail="User chưa được xác thực")

@@ -43,3 +43,13 @@ async def verify_jwt(token: HTTPAuthorizationCredentials = Depends(security)):
             detail=f"Invalid token: {str(e)}"
         )
 
+async def verify_admin(user = Depends(verify_jwt)):
+    """Kiểm tra user có role admin không"""
+    role = user.get("custom:role")
+    if role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Chỉ admin mới có quyền truy cập chức năng này"
+        )
+    return user
+

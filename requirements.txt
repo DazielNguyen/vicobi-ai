@@ -18,9 +18,16 @@ loguru==0.7.3
 numpy>=1.27
 scipy>=1.14
 pytest==8.3.4
+PyPDF2==3.0.1
 httpx==0.28.1
 pyjwt[crypto]==2.8.0
 onnx
 torchvision
 easyocr
 boto3
+langchain-core
+langchain-aws
+qdrant-client
+langchain-qdrant
+langchain-huggingface
+sentence-transformers

@@ -22,34 +22,30 @@ def is_mongodb_connected() -> bool:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """
-    Lifecycle manager for FastAPI application.
-    Connects to MongoDB on startup and disconnects on shutdown.
-    """
+    """Lifecycle manager: Connect to MongoDB on startup and disconnect on shutdown"""
     global mongodb_available
     
     try:
-        logger.info("🔌 Connecting to MongoDB...")
+        logger.info("Connecting to MongoDB...")
         connect(
             db=settings.MONGO_INITDB_DATABASE, 
             host=settings.mongo_uri, 
             alias="default",
-            serverSelectionTimeoutMS=5000,  # Quick timeout
+            serverSelectionTimeoutMS=5000,
             connectTimeoutMS=5000
         )
         mongodb_available = True
-        logger.success(f"✅ MongoDB connected: {settings.MONGO_HOST}:{settings.MONGO_PORT}/{settings.MONGO_INITDB_DATABASE}")
+        logger.success(f"MongoDB connected: {settings.MONGO_HOST}:{settings.MONGO_PORT}/{settings.MONGO_INITDB_DATABASE}")
     except Exception as e:
         mongodb_available = False
-        logger.warning(f"⚠️  MongoDB connection failed: {e}")
+        logger.warning(f"MongoDB connection failed: {e}")
 
     yield
 
-    # Cleanup on shutdown
     if mongodb_available:
-        logger.info("🔌 Disconnecting MongoDB...")
+        logger.info("Disconnecting MongoDB...")
         try:
             disconnect(alias="default")
-            logger.success("✅ MongoDB disconnected")
+            logger.success("MongoDB disconnected")
         except Exception as e:
-            logger.error(f"❌ Failed to disconnect MongoDB: {e}")
+            logger.error(f"Failed to disconnect MongoDB: {e}")

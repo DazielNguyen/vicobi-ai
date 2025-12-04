@@ -18,7 +18,6 @@ class BedrockBillExtractor:
     
     def _load_prompt_template(self) -> str:
         """Tải mẫu prompt từ extraction_bill_vi.txt"""
-        # Điều chỉnh đường dẫn tùy theo cấu trúc project của bạn
         prompt_path = Path(__file__).parent.parent.parent / "prompts" / "extraction_bill_en.txt"
         print(f"Loading prompt template from: {prompt_path}")
         try:
@@ -32,8 +31,6 @@ class BedrockBillExtractor:
     def _initialize_client(self) -> None:
         region = self.config.get('aws.region', 'ap-southeast-1')
         self.model_id = self.config.get('aws.model_id', 'anthropic.claude-3-5-sonnet-20240620-v1:0')
-        
-        # Boto3 sẽ tự tìm credentials từ env var hoặc IAM Role
         self.client = boto3.client(service_name='bedrock-runtime', region_name=region)
         
     def _ocr_list_to_string(self, ocr_output: list) -> str:
@@ -53,8 +50,6 @@ class BedrockBillExtractor:
             raise ValueError("Text cannot be empty")
         
         full_prompt = f"{self.prompt_template}\n\nTranscript:\n{text}"
-        
-        # Cấu trúc body cho model Claude 3
         body = json.dumps({
             "anthropic_version": "bedrock-2023-05-31",
             "max_tokens": 4096,
@@ -77,17 +72,14 @@ class BedrockBillExtractor:
             
             response_body = json.loads(response.get('body').read())
             
-            # Lấy text từ response của Claude
             response_text = response_body.get('content')[0].get('text').strip()
             
-            # Tính toán tokens (nếu response trả về)
             usage = response_body.get('usage', {})
             tokens_used = usage.get('input_tokens', 0) + usage.get('output_tokens', 0)
             
             if return_raw:
                 return {"raw_response": response_text, "tokens_used": tokens_used}
 
-            # Parse JSON từ text trả về
             json_match = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', response_text, re.DOTALL)
             if json_match:
                 response_text = json_match.group(1)
@@ -110,7 +102,7 @@ class BedrockBillExtractor:
             }
     
     def extract_to_schema(self, text: str | list) -> Dict[str, Any]:
-        """Convert output thành Schema chuẩn cho Bill Response"""
+        """Convert extraction output to standard bill schema"""
         if isinstance(text, list):
             text = self._ocr_list_to_string(text)
 
