@@ -46,11 +46,11 @@ class BillService:
 
             content = await file.read()
             
-            if not is_bill(content):
-                raise HTTPException(
-                    status_code=400,
-                    detail="Hệ thống nhận diện đây không phải là hình ảnh hóa đơn hợp lệ."
-                )
+            # if not is_bill(content):
+            #     raise HTTPException(
+            #         status_code=400,
+            #         detail="Hệ thống nhận diện đây không phải là hình ảnh hóa đơn hợp lệ."
+            #     )
 
             temp_input_path = Utils.save_temp_file(file, content)
 
