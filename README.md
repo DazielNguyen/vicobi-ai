@@ -29,6 +29,15 @@ Hệ thống AI backend phục vụ cho ứng dụng Vicobi, cung cấp khả n�
 - **Phân loại hóa đơn**: Phân loại loại hóa đơn bằng PyTorch model
 - **Xử lý ảnh**: Xử lý và tối ưu hóa ảnh trước khi OCR
 
+#### 💬 Chatbot RAG (Retrieval-Augmented Generation)
+
+- **Hỏi đáp thông minh**: Trả lời câu hỏi dựa trên context được cung cấp
+- **Vector Search**: Tìm kiếm ngữ nghĩa với Qdrant vector database
+- **Embedding Model**: Sử dụng multilingual sentence transformers
+- **Auto-initialization**: Tự động load context files khi khởi động app
+- **File Management**: Upload, delete và quản lý file PDF/TXT
+- **Context-aware**: Trả lời chính xác dựa trên tài liệu đã index
+
 #### 🔐 Xác thực & Bảo mật (Authentication & Security)
 
 - **Tích hợp AWS Cognito**: Xác thực người dùng qua JWT tokens
@@ -56,11 +65,14 @@ Hệ thống AI backend phục vụ cho ứng dụng Vicobi, cung cấp khả n�
 - **PyTorch** (v2.9.1): Deep learning framework
 - **PhoWhisper**: Vietnamese speech recognition model
 - **EasyOCR**: OCR engine với Vietnamese support
+- **Sentence Transformers**: Multilingual embedding models cho semantic search
+- **LangChain**: Framework cho RAG implementation
 
 #### Cơ sở Dữ liệu & Lưu trữ (Database & Storage)
 
 - **MongoDB** (latest): NoSQL document database
 - **MongoEngine** (v0.29.1): ODM (Object-Document Mapper)
+- **Qdrant**: Vector database cho semantic search và RAG
 
 #### Thư viện Bổ sung (Additional Libraries)
 
@@ -88,7 +100,8 @@ vicobi-ai/
 │   ├── routers/                           # 🌐 API Endpoints (Controllers)
 │   │   ├── __init__.py
 │   │   ├── voice.py                       # Voice processing endpoints
-│   │   └── bill.py                        # Bill extraction endpoints
+│   │   ├── bill.py                        # Bill extraction endpoints
+│   │   └── chatbot.py                     # Chatbot RAG endpoints
 │   │
 │   ├── models/                            # 💾 Database Models (MongoEngine)
 │   │   ├── __init__.py
@@ -108,6 +121,8 @@ vicobi-ai/
 │   │   ├── __init__.py
 │   │   ├── voice_service.py               # Voice processing business logic
 │   │   ├── bill_service.py                # Bill processing business logic
+│   │   ├── chatbot_service.py             # Chatbot RAG business logic
+│   │   ├── context_initializer.py         # Auto-load context files at startup
 │   │   ├── utils.py                       # Utility functions
 │   │   │
 │   │   └── bedrock_extractor/             # 🤖 AWS Bedrock AI Integration
@@ -115,17 +130,22 @@ vicobi-ai/
 │   │       ├── service.py                 # Main Bedrock service
 │   │       ├── config.py                  # Bedrock configuration
 │   │       ├── voice.py                   # Voice extraction với Bedrock
-│   │       └── bill.py                    # Bill extraction với Bedrock
+│   │       ├── bill.py                    # Bill extraction với Bedrock
+│   │       └── chatbot.py                 # Chatbot response generation
 │   │
 │   ├── ai_models/                         # 🎓 AI Model Management
 │   │   ├── __init__.py
 │   │   ├── voice.py                       # PhoWhisper model loader
 │   │   ├── bill.py                        # Bill classifier model
-│   │   └── saved_models/                  # Pre-trained models
-│   │       └── pytorch-bill_classifier.pth
-│   │
+│   │   ├── embeddings.py                  # Embedding model for semantic search
+│   │   ├── context/                       # Context files for RAG (auto-embedded)
+│   │   │   └── *.pdf, *.txt               # Knowledge base documents
 │   └── prompts/                           # 📝 AI Prompts Templates
 │       ├── extraction_voice_en.txt        # Voice extraction prompt (English)
+│       ├── extraction_voice_vi.txt        # Voice extraction prompt (Vietnamese)
+│       ├── extraction_bill_en.txt         # Bill extraction prompt (English)
+│       ├── extraction_bill_vi.txt         # Bill extraction prompt (Vietnamese)
+│       └── chat_system_prompt.txt         # Chatbot system prompt with markdown formatting
 │       ├── extraction_voice_vi.txt        # Voice extraction prompt (Vietnamese)
 │       ├── extraction_bill_en.txt         # Bill extraction prompt (English)
 │       └── extraction_bill_vi.txt         # Bill extraction prompt (Vietnamese)
@@ -288,11 +308,15 @@ USER_POOL_ID=your_pool_id
 APP_CLIENT_ID=your_client_id
 REGION=ap-southeast-1
 
+# Qdrant Vector Database
+QDRANT_URL=http://localhost:6333
+QDRANT_COLLECTION_NAME=vicobi_knowledge
+
 # CORS
 ALLOWED_ORIGINS=http://localhost:3000
 ```
 
-### Bước 3: Khởi động MongoDB
+### Bước 3: Khởi động MongoDB và Qdrant
 
 ```bash
 # Chạy MongoDB với Docker
@@ -304,6 +328,13 @@ docker run -d \
   -e MONGO_INITDB_DATABASE=VicobiMongoDB \
   -v mongo_data:/data/db \
   mongo:latest
+
+# Chạy Qdrant Vector Database với Docker
+docker run -d \
+  --name vicobi-qdrant \
+  -p 6333:6333 \
+  -v qdrant_data:/qdrant/storage \
+  qdrant/qdrant:latest
 ```
 
 ### Bước 4: Chạy Application
@@ -470,6 +501,45 @@ curl -X POST "http://localhost:8000/api/v1/ai/bills/extract" \
   -F "file=@bill.jpg"
 ```
 
+**Kiểm tra Health Chatbot Service:**
+
+```bash
+curl -X GET "http://localhost:8000/api/v1/ai/chatbot/health" \
+  -H "Authorization: Bearer YOUR_ADMIN_JWT_TOKEN"
+```
+
+**Hỏi đáp với Chatbot:**
+
+```bash
+curl -X POST "http://localhost:8000/api/v1/ai/chatbot/ask" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"question": "Phí chuyển khoản là bao nhiêu?"}'
+```
+
+**Upload file context:**
+
+```bash
+curl -X POST "http://localhost:8000/api/v1/ai/chatbot/ingest" \
+  -H "Authorization: Bearer YOUR_ADMIN_JWT_TOKEN" \
+  -H "Content-Type: multipart/form-data" \
+  -F "file=@knowledge.pdf"
+```
+
+**Lấy danh sách files:**
+
+```bash
+curl -X GET "http://localhost:8000/api/v1/ai/chatbot/files" \
+  -H "Authorization: Bearer YOUR_ADMIN_JWT_TOKEN"
+```
+
+**Xóa một file:**
+
+```bash
+curl -X DELETE "http://localhost:8000/api/v1/ai/chatbot/files/knowledge.pdf" \
+  -H "Authorization: Bearer YOUR_ADMIN_JWT_TOKEN"
+```
+
 ---
 
 ## 🔧 Khắc phục Sự cố (Troubleshooting)
@@ -522,6 +592,26 @@ docker inspect vicobi-ai-service
 - Test: `aws bedrock list-foundation-models --region ap-southeast-1`
 - Đảm bảo model ID có sẵn trong region
 
+### Lỗi: Qdrant connection failed
+
+```bash
+# Kiểm tra Qdrant đang chạy
+docker ps | grep qdrant
+
+# Xem logs
+docker logs vicobi-qdrant
+
+# Test kết nối
+curl http://localhost:6333/collections
+```
+
+### Lỗi: Context files không được auto-embedded
+
+- Kiểm tra file có đúng định dạng (.pdf hoặc .txt)
+- Xem logs khi startup: `docker compose logs ai-service | grep "Context"`
+- File phải nằm trong folder `app/ai_models/context/`
+- Restart app để trigger auto-initialization
+
 ---
 
 ## 📚 Tài liệu API (API Documentation)
@@ -554,7 +644,22 @@ Sau khi khởi động server, truy cập Swagger UI để xem đầy đủ tài
 | GET    | `/api/v1/ai/bills/health`  | Kiểm tra health Bill Service                  | Có       |
 | POST   | `/api/v1/ai/bills/extract` | Trích xuất thông tin từ ảnh hóa đơn (Bedrock) | Có       |
 
-> **Lưu ý**: Tất cả các endpoint có đánh dấu "Có" ở cột Xác thực yêu cầu JWT token từ AWS Cognito trong header `Authorization: Bearer <token>`
+#### Chatbot RAG
+
+| Method | Endpoint                          | Mô tả                                          | Xác thực      |
+| ------ | --------------------------------- | ---------------------------------------------- | ------------- |
+| GET    | `/api/v1/ai/chatbot/health`       | Kiểm tra health Chatbot Service                | Admin         |
+| POST   | `/api/v1/ai/chatbot/ask`          | Hỏi đáp với chatbot (member & admin)           | Member, Admin |
+| GET    | `/api/v1/ai/chatbot/files`        | Lấy danh sách files đã được ingest             | Admin         |
+| POST   | `/api/v1/ai/chatbot/ingest`       | Upload và ingest file PDF/TXT vào vector store | Admin         |
+| DELETE | `/api/v1/ai/chatbot/files/{name}` | Xóa một file cụ thể khỏi vector store          | Admin         |
+| DELETE | `/api/v1/ai/chatbot/reset`        | Xóa toàn bộ dữ liệu trong collection           | Admin         |
+
+> **Lưu ý**:
+>
+> - Tất cả các endpoint yêu cầu JWT token từ AWS Cognito trong header `Authorization: Bearer <token>`
+> - **Member**: User với role `member` hoặc `admin`
+> - **Admin**: Chỉ user với role `admin`
 
 ---
 

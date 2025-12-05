@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import jwt
 from jwt.algorithms import RSAAlgorithm
@@ -42,4 +42,24 @@ async def verify_jwt(token: HTTPAuthorizationCredentials = Depends(security)):
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=f"Invalid token: {str(e)}"
         )
+
+async def verify_admin(user = Depends(verify_jwt)):
+    """Kiểm tra user có role admin không"""
+    role = user.get("custom:role")
+    if role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Chỉ admin mới có quyền truy cập chức năng này"
+        )
+    return user
+
+async def verify_member_or_admin(user = Depends(verify_jwt)):
+    """Kiểm tra user có role member hoặc admin"""
+    role = user.get("custom:role")
+    if role not in ["member", "admin"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Bạn không có quyền truy cập chức năng này"
+        )
+    return user
 

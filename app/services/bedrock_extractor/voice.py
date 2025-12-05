@@ -40,7 +40,6 @@ class BedrockVoiceExtractor:
         
         full_prompt = f"{self.prompt_template}\n\nTranscript:\n{text}"
         
-        # Claude 3 message format
         body = json.dumps({
             "anthropic_version": "bedrock-2023-05-31",
             "max_tokens": 4096,
@@ -73,7 +72,6 @@ class BedrockVoiceExtractor:
             
             result = json.loads(response_text)
             
-            # Đảm bảo cấu trúc
             if "total_amount" not in result:
                 result["total_amount"] = {"incomes": 0.0, "expenses": 0.0}
             if "transactions" not in result:
@@ -95,7 +93,7 @@ class BedrockVoiceExtractor:
             }
     
     def extract_to_schema(self, text: str) -> Dict[str, Any]:
-        """Convert output thành Schema chuẩn"""
+        """Convert extraction output to standard schema"""
         start_time = time.time()
         json_result = self.extract_from_text(text, return_raw=False)
         

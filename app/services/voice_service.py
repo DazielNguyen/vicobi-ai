@@ -3,7 +3,6 @@ from datetime import datetime, timezone
 from typing import Dict, Any, Union, Optional
 from fastapi import UploadFile, HTTPException
 from loguru import logger
-
 from app.services.utils import Utils
 from app.ai_models.voice import transcribe_audio_file
 from app.models.voice import Voice, VoiceTransactionDetail, VoiceTransactions, VoiceTotalAmount
@@ -13,7 +12,7 @@ from app.services.bedrock_extractor.voice import BedrockVoiceExtractor
 
 
 class VoiceService:
-    """Service xử lý voice processing sử dụng AWS Bedrock AI"""
+    """Voice processing service using AWS Bedrock AI"""
         
     def __init__(
         self, 
@@ -22,7 +21,7 @@ class VoiceService:
         self.bedrock_extractor = bedrock_extractor
 
     def transcribe_audio(self, audio_path: str) -> str:
-        """Chuyển đổi file âm thanh sang văn bản (Dùng chung cho cả 2 luồng)"""
+        """Convert audio file to text"""
         wav_path = Utils.convert_audio_to_wav(
             input_file=audio_path,
             sample_rate=16000,
@@ -41,7 +40,6 @@ class VoiceService:
             return transcription_text
             
         finally:
-            # Cleanup wav file converted from pydub
             if os.path.exists(wav_path):
                 try:
                     os.remove(wav_path)
@@ -49,9 +47,7 @@ class VoiceService:
                     pass
 
     async def process_via_bedrock(self, file: UploadFile, cog_sub: str) -> VoiceResponse:
-        """
-        Xử lý file âm thanh sử dụng AWS Bedrock (Claude 3) để trích xuất dữ liệu
-        """
+        """Process audio file using AWS Bedrock Claude 3 for data extraction"""
         if not self.bedrock_extractor:
             raise HTTPException(status_code=503, detail="Bedrock Service chưa được cấu hình")
 
@@ -64,41 +60,29 @@ class VoiceService:
         extractor: Union[BedrockVoiceExtractor],
         provider_name: str
     ) -> VoiceResponse:
-        """
-        Luồng xử lý chung: Validate -> Save Temp -> Transcribe -> Extract (bằng extractor truyền vào) -> Save DB
-        """
+        """Common processing pipeline: Validate -> Save Temp -> Transcribe -> Extract -> Save DB"""
         temp_input_path = None
         
         try:
-            # 1. Validate file
             if not Utils.is_valid_audio_file(file.filename):
                 raise HTTPException(
                     status_code=400,
                     detail="Định dạng file không hợp lệ. Hỗ trợ: mp3, wav, m4a, flac, aac, ogg."
                 )
             
-            # 2. Save temp file
             content = await file.read()
             temp_input_path = Utils.save_temp_file(file, content)
             
-            # 3. Transcribe audio (Chuyển Audio -> Text)
             transcription_text = self.transcribe_audio(temp_input_path)
             
-            # 4. Extract schema (Text -> JSON)
             schema_result = extractor.extract_to_schema(transcription_text)
-            print("="*50)
-            print(f"🧾 SCHEMA RESULT: {schema_result}")
-            print("="*50)
-            # 5. Generate Metadata
+            
             voice_id = Utils.generate_unique_filename("voice", file.filename).replace(" ", "_")
-            # Thêm suffix provider vào ID để dễ debug (vd: voice_abc_bedrock)
             voice_id = f"{voice_id}_{provider_name}" 
             utc_time = datetime.now(timezone.utc)
             
-            # 6. Save to database
             self.save_to_database(voice_id, cog_sub, schema_result, transcription_text, utc_time)
             
-            # 7. Return Response
             return self.create_response(voice_id, schema_result, utc_time)
             
         except HTTPException:
@@ -109,7 +93,6 @@ class VoiceService:
             logger.error(f"Error in {provider_name} pipeline: {e}")
             raise HTTPException(status_code=500, detail=f"Lỗi xử lý hệ thống: {str(e)}")
         finally:
-            # Cleanup temp input file
             if temp_input_path and os.path.exists(temp_input_path):
                 try:
                     os.remove(temp_input_path)
@@ -161,11 +144,11 @@ class VoiceService:
             )
             
             voice_doc.save()
-            logger.success(f"✅ Saved voice_id={voice_id} to database")
+            logger.success(f"Saved voice_id={voice_id} to database")
             return True
         
         except Exception as e:
-            logger.error(f"❌ Failed to save to database: {e}")
+            logger.error(f"Failed to save to database: {e}")
             return False
     
     def create_response(

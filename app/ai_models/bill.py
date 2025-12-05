@@ -6,9 +6,9 @@ import torch.nn as nn
 from torchvision import models
 from PIL import Image
 import torchvision.transforms as T
+from loguru import logger
 from app.config import settings
 import io
-import os
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -17,18 +17,33 @@ SAVE_DIR = BASE_DIR / "saved_models"
 MODEL_BILL_FILE_NAME = settings.MODEL_BILL_FILE_NAME
 MODEL_PATH = SAVE_DIR / MODEL_BILL_FILE_NAME
 
-base_model = models.mobilenet_v2(weights=None)
-for param in base_model.parameters():
-    param.requires_grad = False
+if 'v1' in MODEL_BILL_FILE_NAME.lower():
+    base_model = models.mobilenet_v2(weights=None)
+    for param in base_model.parameters():
+        param.requires_grad = False
+    
+    num_ftrs = base_model.last_channel
+    classifier_head = nn.Sequential(
+        nn.Dropout(0.2),
+        nn.Linear(num_ftrs, 128),
+        nn.ReLU(),
+        nn.Linear(128, 1)
+    )
+    base_model.classifier = classifier_head
+    
+else:
+    base_model = models.efficientnet_b0(weights=None)
+    
+    num_ftrs = base_model.classifier[1].in_features
+    
+    base_model.classifier = nn.Sequential(
+        nn.Dropout(p=0.3, inplace=True),
+        nn.Linear(num_ftrs, 128),
+        nn.ReLU(),
+        nn.Dropout(p=0.3), 
+        nn.Linear(128, 1)
+    )
 
-num_ftrs = base_model.last_channel
-classifier_head = nn.Sequential(
-    nn.Dropout(0.2),
-    nn.Linear(num_ftrs, 128),
-    nn.ReLU(),
-    nn.Linear(128, 1)
-)
-base_model.classifier = classifier_head
 loaded_model = base_model.to(device)
 
 try:
@@ -36,12 +51,14 @@ try:
     loaded_model.load_state_dict(checkpoint['model_state_dict'])
     loaded_model.eval()
 except Exception as e:
-    print(f"Lỗi khi load model: {e}")
+    logger.error(f"Error loading bill classifier model: {e}")
 
 THRESHOLD = 0.85
 transform_inference = T.Compose([
-    T.ToTensor(), 
+    T.ToTensor(),
+    T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 ])
+
 ocr_reader = easyocr.Reader(['en', 'vi'])
 
 def is_bill_model_ready() -> bool:
@@ -58,10 +75,7 @@ def is_bill_model_ready() -> bool:
         return False
 
 def is_bill(file_bytes: bytes) -> bool:
-    """
-    Nhận file bytes đã được frontend crop/resize,
-    trả về True nếu là hóa đơn, False nếu không.
-    """
+    """Classify image bytes to determine if it's a valid bill/invoice"""
     img_pil = Image.open(io.BytesIO(file_bytes)).convert('RGB')
     img_tensor = transform_inference(img_pil).unsqueeze(0).to(device)
 
@@ -73,28 +87,19 @@ def is_bill(file_bytes: bytes) -> bool:
 
     return P_BILL >= THRESHOLD or (P_BILL > P_NOT_BILL)
 
-
-
 # Hàm trích xuất OCR
-def extract_bill_using_ocr_model(file_path: str, save_result_img: bool = False) -> str:
-    """
-    Nhận đường dẫn file ảnh hóa đơn (đã được frontend xử lý), trả về dict dữ liệu trích xuất từ OCR.
-    - file_path: đường dẫn file ảnh
-    - save_result_img: True để lưu ảnh có bounding box
-    """
-    # 1. Đọc ảnh
+def extract_bill_using_ocr_model(file_path: str) -> str:
+    """Extract text from bill image using EasyOCR"""
     img = cv2.imread(file_path)
     if img is None:
         raise FileNotFoundError(f"Không tìm thấy file: {file_path}")
 
-    # 2. OCR với EasyOCR
     results = ocr_reader.readtext(img)
 
     extracted_texts = []
-    LINE_COLOR = (0, 255, 0)  # Xanh lá (BGR)
+    LINE_COLOR = (0, 255, 0)
     THICKNESS = 2
 
-    # 3. Vẽ bounding box và lưu văn bản + độ tin cậy
     for (bbox, text, prob) in results:
         top_left = tuple([int(val) for val in bbox[0]])
         bottom_right = tuple([int(val) for val in bbox[2]])
@@ -105,11 +110,5 @@ def extract_bill_using_ocr_model(file_path: str, save_result_img: bool = False) 
             "confidence": float(prob),
             "bbox": [top_left, bottom_right]
         })
-
-    # 4. Lưu ảnh kết quả nếu cần
-    if save_result_img:
-        ext = file_path.split('.')[-1]
-        result_img_path = file_path.replace(f".{ext}", f"_ocr.{ext}")
-        cv2.imwrite(result_img_path, img)
 
     return extracted_texts
