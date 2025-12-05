@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends, UploadFile, File
 from typing import Optional
-from app.auth import verify_admin, verify_member_or_admin
+from app.auth import verify_admin, verify_jwt
 from app.config import settings
 from app.database import is_mongodb_connected
 from app.services.chatbot_service import ChatbotService
@@ -20,7 +20,7 @@ def get_service():
 
 @router.get("/health")
 async def health_check(
-    user=Depends(verify_member_or_admin),
+    user=Depends(verify_jwt),
     service: ChatbotService = Depends(get_service)
 ):
     """Kiểm tra trạng thái Chatbot Service (chỉ admin)"""
@@ -73,7 +73,7 @@ async def ingest(
 @router.post("/ask", response_model=ChatResponse)
 async def ask(
     req: ChatRequest,
-    user=Depends(verify_member_or_admin),
+    user=Depends(verify_jwt),
     service: ChatbotService = Depends(get_service)
 ):
     """Hỏi đáp với chatbot sử dụng RAG (member & admin)"""
