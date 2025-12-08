@@ -122,6 +122,10 @@ class BedrockBillExtractor:
             ]
             
             transactions = BillTransactionsSchema(expenses=expenses)
+            
+            # Kiểm tra nếu response rỗng (không có transactions)
+            if not expenses and total_amount.expenses == 0.0:
+                raise ValueError("Không thể trích xuất được thông tin từ hóa đơn. Vui lòng thử lại với hình ảnh rõ ràng hơn.")
         
             processing_time = time.time() - start_time
             

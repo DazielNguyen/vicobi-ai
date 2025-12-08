@@ -31,3 +31,4 @@ qdrant-client
 langchain-qdrant
 langchain-huggingface
 sentence-transformers
+slowapi==0.1.9

@@ -1,5 +1,7 @@
 from typing import Optional
-from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
+from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, Request
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 from app.auth import verify_jwt
 from app.config import settings
 from app.schemas.voice import VoiceResponse
@@ -12,6 +14,7 @@ router = APIRouter(
 )
 
 voice_service: Optional[VoiceService] = None
+limiter = Limiter(key_func=get_remote_address)
 
 def get_voice_service() -> VoiceService:
     """Dependency to ensure VoiceService is initialized"""
@@ -42,7 +45,9 @@ async def health_check(
     }
 
 @router.post("/process", response_model=VoiceResponse)
+@limiter.limit(f"{settings.RATE_LIMIT_TIMES}/{settings.RATE_LIMIT_SECONDS}seconds")
 async def process_audio(
+    request: Request,
     file: UploadFile = File(...), 
     user=Depends(verify_jwt),
     service: VoiceService = Depends(get_voice_service)

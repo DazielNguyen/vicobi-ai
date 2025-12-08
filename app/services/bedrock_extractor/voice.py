@@ -110,6 +110,10 @@ class BedrockVoiceExtractor:
             expenses = [VoiceTransactionDetailSchema(**item) for item in transactions_data.get('expenses', [])]
             
             transactions = VoiceTransactionsSchema(incomes=incomes, expenses=expenses)
+            
+            # Kiểm tra nếu response rỗng (không có transactions)
+            if not incomes and not expenses and total_amount.incomes == 0.0 and total_amount.expenses == 0.0:
+                raise ValueError("Không thể trích xuất được thông tin giao dịch từ file âm thanh. Vui lòng đảm bảo file có chứa thông tin giao dịch rõ ràng.")
         
             processing_time = time.time() - start_time
             

@@ -1,8 +1,11 @@
-from fastapi import FastAPI, HTTPException, status
+from fastapi import FastAPI, HTTPException, status, Request
 from fastapi.responses import RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 from loguru import logger
 from contextlib import asynccontextmanager
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 from app.config import settings
 from app.database import lifespan as db_lifespan
 from app.routers import voice, bill, chatbot
@@ -14,6 +17,9 @@ from app.services.chatbot_service import get_chatbot_service_instance
 
 ai_services_ready = False
 bedrock_service = None
+
+# Initialize Rate Limiter
+limiter = Limiter(key_func=get_remote_address)
 
 @asynccontextmanager
 async def main_lifespan(app: FastAPI):
@@ -87,6 +93,10 @@ app = FastAPI(
     lifespan=main_lifespan,
     debug=settings.DEBUG,
 )
+
+# Add Rate Limiter to app state
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 app.add_middleware(
     CORSMiddleware,

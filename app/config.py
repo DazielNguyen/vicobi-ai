@@ -37,6 +37,10 @@ class Settings(BaseSettings):
     QDRANT_URL: str = Field(default="http://localhost:6333")
     QDRANT_COLLECTION_NAME: str = Field(default="vicobi_collection")
     
+    # Rate Limiting Configuration
+    RATE_LIMIT_TIMES: int = Field(default=10, description="Số lượng request tối đa")
+    RATE_LIMIT_SECONDS: int = Field(default=60, description="Thời gian (giây) để reset rate limit")
+    
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

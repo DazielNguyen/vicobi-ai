@@ -1,5 +1,7 @@
-from fastapi import APIRouter, HTTPException, Depends, UploadFile, File
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Request
 from typing import Optional
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 from app.auth import verify_admin, verify_jwt
 from app.config import settings
 from app.database import is_mongodb_connected
@@ -12,6 +14,7 @@ router = APIRouter(
 )
 
 chatbot_service: Optional[ChatbotService] = None
+limiter = Limiter(key_func=get_remote_address)
 
 def get_service():
     if not chatbot_service:
@@ -71,7 +74,9 @@ async def ingest(
         raise HTTPException(status_code=500, detail=f"Lỗi khi xử lý file: {str(e)}")
 
 @router.post("/ask", response_model=ChatResponse)
+@limiter.limit(f"{settings.RATE_LIMIT_TIMES}/{settings.RATE_LIMIT_SECONDS}seconds")
 async def ask(
+    request: Request,
     req: ChatRequest,
     user=Depends(verify_jwt),
     service: ChatbotService = Depends(get_service)
