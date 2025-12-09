@@ -31,7 +31,7 @@ def load_config() -> Config:
     """Load configuration from Pydantic Settings"""
     config_dict = {
         "aws": {
-            "region": settings.AWS_REGION,
+            "region": settings.REGION,
             "model_id": settings.BEDROCK_MODEL_ID,
             "timeout": settings.BEDROCK_TIMEOUT,
             "access_key_id": settings.AWS_ACCESS_KEY_ID,

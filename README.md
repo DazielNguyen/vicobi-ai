@@ -298,7 +298,6 @@ MONGO_INITDB_ROOT_PASSWORD=your_password
 MONGO_INITDB_DATABASE=VicobiMongoDB
 
 # AWS Bedrock
-AWS_REGION=ap-southeast-1
 BEDROCK_MODEL_ID=anthropic.claude-3-5-sonnet-20240620-v1:0
 AWS_ACCESS_KEY_ID=your_aws_key
 AWS_SECRET_ACCESS_KEY=your_aws_secret

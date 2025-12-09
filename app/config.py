@@ -19,7 +19,6 @@ class Settings(BaseSettings):
     MONGO_INITDB_ROOT_PASSWORD: str = Field(default="12345")
     MONGO_INITDB_DATABASE: str = Field(default="VicobiMongoDB")
 
-    AWS_REGION: str = Field(default="ap-southeast-1")
     BEDROCK_MODEL_ID: str = Field(default="anthropic.claude-3-5-sonnet-20240620-v1:0")
     BEDROCK_TIMEOUT: int = Field(default=60)
     BEDROCK_TEMPERATURE: float = Field(default=0.0)
