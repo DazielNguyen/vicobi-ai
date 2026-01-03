@@ -1,5 +1,7 @@
 # Vicobi AI
 
+## Demo
+
 ## Giới thiệu Project
 
 **Vicobi AI** là một hệ thống API backend xử lý dữ liệu đa phương thức (multimodal) sử dụng công nghệ AI tiên tiến. Project tập trung vào hai chức năng chính: **xử lý giọng nói** (voice processing) và **trích xuất thông tin hóa đơn** (bill/invoice extraction) thông qua các mô hình AI và OCR.
