@@ -1,10 +1,10 @@
-# 🚀 Vicobi AI
+# Vicobi AI
 
-## 📖 Giới thiệu Project
+## Giới thiệu Project
 
 **Vicobi AI** là một hệ thống API backend xử lý dữ liệu đa phương thức (multimodal) sử dụng công nghệ AI tiên tiến. Project tập trung vào hai chức năng chính: **xử lý giọng nói** (voice processing) và **trích xuất thông tin hóa đơn** (bill/invoice extraction) thông qua các mô hình AI và OCR.
 
-### 🎯 Chủ đề
+### Chủ đề
 
 Hệ thống AI backend phục vụ cho ứng dụng Vicobi, cung cấp khả năng:
 
@@ -13,23 +13,23 @@ Hệ thống AI backend phục vụ cho ứng dụng Vicobi, cung cấp khả n�
 - Xử lý và lưu trữ dữ liệu thông qua MongoDB
 - Cung cấp RESTful API với tài liệu tự động (Swagger UI)
 
-### ✨ Tính năng chính
+### Tính năng chính
 
-#### 🎤 Xử lý Giọng nói (Voice Processing)
+#### Xử lý Giọng nói (Voice Processing)
 
 - **Speech Recognition**: Chuyển đổi audio thành text với PhoWhisper model
 - **Trích xuất thông tin**: Trích xuất thông tin có cấu trúc từ nội dung giọng nói
 - **Hỗ trợ đa ngôn ngữ**: Tiếng Việt và tiếng Anh
 - **Hỗ trợ định dạng**: MP3, WAV, M4A, v.v.
 
-#### 📄 Xử lý Hóa đơn (Bill/Invoice Processing)
+#### Xử lý Hóa đơn (Bill/Invoice Processing)
 
 - **OCR Processing**: Nhận dạng ký tự từ ảnh hóa đơn (EasyOCR)
 - **Trích xuất bằng AI**: Trích xuất thông tin có cấu trúc (tên cửa hàng, số tiền, ngày tháng, sản phẩm)
 - **Phân loại hóa đơn**: Phân loại loại hóa đơn bằng PyTorch model
 - **Xử lý ảnh**: Xử lý và tối ưu hóa ảnh trước khi OCR
 
-#### 💬 Chatbot RAG (Retrieval-Augmented Generation)
+#### Chatbot RAG (Retrieval-Augmented Generation)
 
 - **Hỏi đáp thông minh**: Trả lời câu hỏi dựa trên context được cung cấp
 - **Vector Search**: Tìm kiếm ngữ nghĩa với Qdrant vector database
@@ -38,19 +38,19 @@ Hệ thống AI backend phục vụ cho ứng dụng Vicobi, cung cấp khả n�
 - **File Management**: Upload, delete và quản lý file PDF/TXT
 - **Context-aware**: Trả lời chính xác dựa trên tài liệu đã index
 
-#### 🔐 Xác thực & Bảo mật (Authentication & Security)
+#### Xác thực & Bảo mật (Authentication & Security)
 
 - **Tích hợp AWS Cognito**: Xác thực người dùng qua JWT tokens
 - **Cấu hình bảo mật**: Quản lý bảo mật với environment variables
 - **Cấu hình CORS**: Kiểm soát truy cập cross-origin
 
-#### 🗄️ Quản lý Dữ liệu (Data Management)
+#### Quản lý Dữ liệu (Data Management)
 
 - **Tích hợp MongoDB**: Lưu trữ NoSQL với MongoEngine ODM
 - **Database Models**: Models cho dữ liệu Voice, Bill và User
 - **Xác thực dữ liệu**: Validation với Pydantic schemas
 
-### 🛠️ Công nghệ sử dụng
+### Công nghệ sử dụng
 
 #### Backend Framework
 
@@ -84,7 +84,7 @@ Hệ thống AI backend phục vụ cho ứng dụng Vicobi, cung cấp khả n�
 
 ---
 
-## 📁 Tổng quan Source Code
+## Tổng quan Source Code
 
 ### Cấu trúc thư mục chi tiết
 
@@ -92,32 +92,32 @@ Hệ thống AI backend phục vụ cho ứng dụng Vicobi, cung cấp khả n�
 vicobi-ai/
 ├── app/                                    # Application root
 │   ├── __init__.py                        # Package initialization
-│   ├── main.py                            # 🚀 FastAPI app entry point & lifespan management
-│   ├── config.py                          # ⚙️ Configuration & environment variables
-│   ├── database.py                        # 🗄️ MongoDB connection setup
-│   ├── auth.py                            # 🔐 AWS Cognito authentication
+│   ├── main.py                            # FastAPI app entry point & lifespan management
+│   ├── config.py                          # Configuration & environment variables
+│   ├── database.py                        # MongoDB connection setup
+│   ├── auth.py                            # AWS Cognito authentication
 │   │
-│   ├── routers/                           # 🌐 API Endpoints (Controllers)
+│   ├── routers/                           # API Endpoints (Controllers)
 │   │   ├── __init__.py
 │   │   ├── voice.py                       # Voice processing endpoints
 │   │   ├── bill.py                        # Bill extraction endpoints
 │   │   └── chatbot.py                     # Chatbot RAG endpoints
 │   │
-│   ├── models/                            # 💾 Database Models (MongoEngine)
+│   ├── models/                            # Database Models (MongoEngine)
 │   │   ├── __init__.py
 │   │   ├── voice.py                       # Voice document model
 │   │   ├── bill.py                        # Bill document model
 │   │   ├── enum.py                        # Enumerations
 │   │   └── README.md
 │   │
-│   ├── schemas/                           # 📋 Pydantic Schemas (Request/Response)
+│   ├── schemas/                           # Pydantic Schemas (Request/Response)
 │   │   ├── __init__.py
 │   │   ├── base.py                        # Base schemas
 │   │   ├── voice.py                       # Voice request/response schemas
 │   │   ├── bill.py                        # Bill request/response schemas
 │   │   └── README.md
 │   │
-│   ├── services/                          # 💼 Business Logic Layer
+│   ├── services/                          # Business Logic Layer
 │   │   ├── __init__.py
 │   │   ├── voice_service.py               # Voice processing business logic
 │   │   ├── bill_service.py                # Bill processing business logic
@@ -125,7 +125,7 @@ vicobi-ai/
 │   │   ├── context_initializer.py         # Auto-load context files at startup
 │   │   ├── utils.py                       # Utility functions
 │   │   │
-│   │   └── bedrock_extractor/             # 🤖 AWS Bedrock AI Integration
+│   │   └── bedrock_extractor/             # AWS Bedrock AI Integration
 │   │       ├── __init__.py
 │   │       ├── service.py                 # Main Bedrock service
 │   │       ├── config.py                  # Bedrock configuration
@@ -133,14 +133,14 @@ vicobi-ai/
 │   │       ├── bill.py                    # Bill extraction với Bedrock
 │   │       └── chatbot.py                 # Chatbot response generation
 │   │
-│   ├── ai_models/                         # 🎓 AI Model Management
+│   ├── ai_models/                         # AI Model Management
 │   │   ├── __init__.py
 │   │   ├── voice.py                       # PhoWhisper model loader
 │   │   ├── bill.py                        # Bill classifier model
 │   │   ├── embeddings.py                  # Embedding model for semantic search
 │   │   ├── context/                       # Context files for RAG (auto-embedded)
 │   │   │   └── *.pdf, *.txt               # Knowledge base documents
-│   └── prompts/                           # 📝 AI Prompts Templates
+│   └── prompts/                           # AI Prompts Templates
 │       ├── extraction_voice_en.txt        # Voice extraction prompt (English)
 │       ├── extraction_voice_vi.txt        # Voice extraction prompt (Vietnamese)
 │       ├── extraction_bill_en.txt         # Bill extraction prompt (English)
@@ -150,12 +150,12 @@ vicobi-ai/
 │       ├── extraction_bill_en.txt         # Bill extraction prompt (English)
 │       └── extraction_bill_vi.txt         # Bill extraction prompt (Vietnamese)
 │
-├── docker-compose.yml                      # 🐳 Docker orchestration
-├── Dockerfile                              # 🐳 Container image definition
-├── requirements.txt                        # 📦 Python dependencies
-├── .env                                    # 🔒 Environment variables (git ignored)
-├── .env-example                            # 📄 Environment template
-└── README.md                               # 📖 Documentation
+├── docker-compose.yml                      # Docker orchestration
+├── Dockerfile                              # Container image definition
+├── requirements.txt                        # Python dependencies
+├── .env                                    # Environment variables (git ignored)
+├── .env-example                            # Environment template
+└── README.md                               # Documentation
 ```
 
 ### Kiến trúc và luồng xử lý
@@ -234,7 +234,7 @@ Client Request → FastAPI Router → Service Layer → AI Models/Extractors →
 
 ---
 
-## 🚀 Hướng dẫn chạy code trực tiếp
+## Hướng dẫn chạy code trực tiếp
 
 ### Yêu cầu hệ thống
 
@@ -245,7 +245,7 @@ Client Request → FastAPI Router → Service Layer → AI Models/Extractors →
 
 ---
 
-## 📦 Phương án 1: Chạy với Virtual Environment
+## Phương án 1: Chạy với Virtual Environment
 
 ### Bước 1: Clone và Setup Environment
 
@@ -268,7 +268,7 @@ pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-> ⏱️ **Lưu ý**: Quá trình cài đặt mất 10-15 phút do các thư viện AI lớn
+> **Lưu ý**: Quá trình cài đặt mất 10-15 phút do các thư viện AI lớn
 
 ### Bước 2: Cấu hình Environment Variables
 
@@ -344,13 +344,13 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 ### Bước 5: Truy cập Application
 
-- 🌐 **API Server**: http://localhost:8000
-- 📚 **API Documentation**: http://localhost:8000/docs
-- ❤️ **Health Check**: http://localhost:8000/health
+- **API Server**: http://localhost:8000
+- **API Documentation**: http://localhost:8000/docs
+- **Health Check**: http://localhost:8000/health
 
 ---
 
-## 🐳 Phương án 2: Chạy với Docker Compose
+## Phương án 2: Chạy với Docker Compose
 
 ---
 
@@ -398,9 +398,9 @@ docker compose logs -f
 
 ### Bước 4: Truy cập Application
 
-- 🌐 **API Server**: http://localhost:8000
-- 📚 **API Documentation**: http://localhost:8000/docs
-- ❤️ **Health Check**: http://localhost:8000/health
+- **API Server**: http://localhost:8000
+- **API Documentation**: http://localhost:8000/docs
+- **Health Check**: http://localhost:8000/health
 
 ### Commands thường dùng
 
@@ -417,7 +417,7 @@ docker compose restart
 # Stop và xóa containers
 docker compose down
 
-# Stop và xóa containers + data (⚠️ cẩn thận)
+# Stop và xóa containers + data (cẩn thận)
 docker compose down -v
 
 # Rebuild images
@@ -460,7 +460,7 @@ docker compose exec mongo mongorestore \
 
 ---
 
-## 🧪 Kiểm thử API (Testing)
+## Kiểm thử API (Testing)
 
 **Kiểm tra Health Hệ thống:**
 
@@ -541,7 +541,7 @@ curl -X DELETE "http://localhost:8000/api/v1/ai/chatbot/files/knowledge.pdf" \
 
 ---
 
-## 🔧 Khắc phục Sự cố (Troubleshooting)
+## Khắc phục Sự cố (Troubleshooting)
 
 ### Lỗi: Port đã được sử dụng
 
@@ -613,11 +613,11 @@ curl http://localhost:6333/collections
 
 ---
 
-## 📚 Tài liệu API (API Documentation)
+## Tài liệu API (API Documentation)
 
 Sau khi khởi động server, truy cập Swagger UI để xem đầy đủ tài liệu API và test endpoints:
 
-👉 **http://localhost:8000/docs**
+**http://localhost:8000/docs**
 
 ### Các Endpoints Chính
 
@@ -662,19 +662,19 @@ Sau khi khởi động server, truy cập Swagger UI để xem đầy đủ tài
 
 ---
 
-## 🔒 Thực hành Bảo mật Tốt nhất (Security Best Practices)
+## Thực hành Bảo mật Tốt nhất (Security Best Practices)
 
-- ⚠️ **KHÔNG BAO GIỜ** commit file `.env` vào Git
-- 🔑 Sử dụng mật khẩu mạnh cho MongoDB
-- 🛡️ Thay đổi API keys định kỳ
-- 📝 Kiểm tra logs thường xuyên để phát hiện bất thường
-- 🚫 Không để lộ dữ liệu nhạy cảm trong logs
-- 🔐 Sử dụng HTTPS trong môi trường production
-- 👥 Triển khai rate limiting cho public APIs
+- **KHÔNG BAO GIỜ** commit file `.env` vào Git
+- Sử dụng mật khẩu mạnh cho MongoDB
+- Thay đổi API keys định kỳ
+- Kiểm tra logs thường xuyên để phát hiện bất thường
+- Không để lộ dữ liệu nhạy cảm trong logs
+- Sử dụng HTTPS trong môi trường production
+- Triển khai rate limiting cho public APIs
 
 ---
 
-## 📊 Giám sát & Logging (Monitoring & Logging)
+## Giám sát & Logging (Monitoring & Logging)
 
 **Vị trí Logs:**
 
